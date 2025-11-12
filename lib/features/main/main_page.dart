@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:teatrope_flutter_app/features/home/presentation/home_page.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/pages/home_page.dart';
 
-class MainPage extends StatefulWidget{
+
+class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
   @override
@@ -9,43 +10,79 @@ class MainPage extends StatefulWidget{
 }
 
 class _MainPageState extends State<MainPage> {
-int _selectedIndex = 0;
+  int _selectedIndex = 0;
 
-@override
+  // Tus páginas (puedes sustituir por las reales)
+  late final List<Widget> _pages = const [
+    HomePage(),
+    ComingSoonPage(),
+    FavoritesPage(),
+    ProfilePage(),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Si quieres disparar carga inicial de “TODOS” desde aquí:
+    // Future.microtask(() =>
+    //   context.read<HomeBloc>().add(const LoadAllObras()),
+    // );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: HomePage()),
+      body: SafeArea(
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: _pages,
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // para 4 ítems
         currentIndex: _selectedIndex,
-        onTap: (value) {
-          setState(() {
-            _selectedIndex = value;
-          });
-        },
-        items: [
+        onTap: (value) => setState(() => _selectedIndex = value),
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.local_movies_outlined),
             activeIcon: Icon(Icons.local_movies),
-            label: "Billboard",
+            label: 'Billboard',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.schedule_outlined),
             activeIcon: Icon(Icons.schedule),
-            label: "Coming soon",
+            label: 'Coming soon',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_outlined),
+            icon: Icon(Icons.favorite_outline),
             activeIcon: Icon(Icons.favorite),
-            label: "Favorites",
+            label: 'Favorites',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_2_outlined),
+            icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: "Profile",
+            label: 'Profile',
           ),
         ],
       ),
     );
   }
+}
 
+class ComingSoonPage extends StatelessWidget {
+  const ComingSoonPage({super.key});
+  @override
+  Widget build(BuildContext context) => const Center(child: Text('Coming soon'));
+}
+
+class FavoritesPage extends StatelessWidget {
+  const FavoritesPage({super.key});
+  @override
+  Widget build(BuildContext context) => const Center(child: Text('Favorites'));
+}
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+  @override
+  Widget build(BuildContext context) => const Center(child: Text('Profile'));
 }

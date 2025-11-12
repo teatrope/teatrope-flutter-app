@@ -1,0 +1,394 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:teatrope_flutter_app/core/enums/status.dart';
+import 'package:teatrope_flutter_app/core/ui/theme.dart'; // DarkBlurBackground
+import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_bloc.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_event.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_state.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/pages/obra_detail_page.dart';
+import 'package:teatrope_flutter_app/features/home/widgets/obra_card.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // Altura fija del carrusel; el ancho se maneja con AspectRatio
+  static const double _carouselHeight = 300;
+
+  final _cities = const ['Lima', 'Arequipa', 'Cusco'];
+  final _districts = const ['Surco', 'Miraflores', 'San Isidro'];
+
+  String _selectedCity = 'Lima';
+  String _selectedDistrict = 'Surco';
+  GenresType? _selectedGenre;
+  bool _isTheaters = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: DarkBlurBackground( // mismo fondo usado en SignIn/SignUp
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            children: [
+              // Header
+              Row(
+                children: [
+                  Text(
+                    'teatrope',
+                    style: tt.headlineMedium?.copyWith(
+                      color: cs.primary, // acento rojo
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const Spacer(),
+                  _roundedIcon(context, Icons.notifications_none, onTap: () {}),
+                  const SizedBox(width: 8),
+                  _roundedIcon(context, Icons.search, onTap: () {}),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // City + ajustes
+              Row(
+                children: [
+                  Expanded(
+                    child: _ChipDropdown<String>(
+                      label: 'Choose city',
+                      value: _selectedCity,
+                      items: _cities,
+                      onChanged: (v) => setState(() => _selectedCity = v ?? _selectedCity),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _roundedIcon(context, Icons.tune, onTap: () {}),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Promo
+              _PromoCard(
+                title: 'Know the promotions of',
+                highlight: 'Tuesdays & Monday',
+                onTap: () {},
+              ),
+              const SizedBox(height: 16),
+
+              // Toggle Services/Theaters
+              _SegmentedTwo(
+                leftLabel: 'Services',
+                rightLabel: 'Theaters',
+                isRightSelected: _isTheaters,
+                onChanged: (v) => setState(() => _isTheaters = v),
+              ),
+              const SizedBox(height: 12),
+
+              // Filtros: District / Genre
+              Row(
+                children: [
+                  Expanded(
+                    child: _ChipDropdown<String>(
+                      label: 'District',
+                      value: _selectedDistrict,
+                      items: _districts,
+                      onChanged: (v) => setState(() => _selectedDistrict = v ?? _selectedDistrict),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ChipDropdown<GenresType>(
+                      label: 'Genre',
+                      value: _selectedGenre,
+                      items: GenresType.values,
+                      itemLabel: (g) => g.label,
+                      onChanged: (g) {
+                        setState(() => _selectedGenre = g);
+                        if (g != null) {
+                          context.read<HomeBloc>().add(GetObrasByGenre(genre: g));
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Carrusel (altura fija + ancho por AspectRatio = no overflow)
+              BlocSelector<HomeBloc, HomeState, (Status, List<Obra>, String?)>(
+                selector: (s) => (s.status, s.obras, s.message),
+                builder: (context, tuple) {
+                  final (status, obras, message) = tuple;
+
+                  if (status == Status.loading) {
+                    return SizedBox(
+                      height: _carouselHeight,
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (status == Status.failure) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          message ?? 'Error',
+                          style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                      ),
+                    );
+                  }
+                  if (obras.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'No hay obras para mostrar',
+                          style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SizedBox(
+                    height: _carouselHeight,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: obras.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (context, i) {
+                        final obra = obras[i];
+                        return AspectRatio(
+                          aspectRatio: 2 / 3, // o 3/4 si prefieres más anchas
+                          child: GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ObraDetailPage(obra: obra),
+                              ),
+                            ),
+                            child: ObraCard(obra: obra),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _roundedIcon(BuildContext context, IconData icon, {VoidCallback? onTap}) {
+    final cs = Theme.of(context).colorScheme;
+    return Material(
+      color: cs.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, color: cs.onSurfaceVariant),
+        ),
+      ),
+    );
+  }
+}
+
+/// ---------- Helpers UI (respetan tu ColorScheme) ----------
+
+class _PromoCard extends StatelessWidget {
+  const _PromoCard({required this.title, required this.highlight, this.onTap});
+  final String title;
+  final String highlight;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                children: [
+                  TextSpan(text: '$title '),
+                  TextSpan(
+                    text: highlight,
+                    style: tt.titleMedium?.copyWith(
+                      color: cs.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Material(
+            color: cs.primary,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Icon(Icons.arrow_right_alt, color: cs.onPrimary),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SegmentedTwo extends StatelessWidget {
+  const _SegmentedTwo({
+    required this.leftLabel,
+    required this.rightLabel,
+    required this.isRightSelected,
+    required this.onChanged,
+  });
+
+  final String leftLabel;
+  final String rightLabel;
+  final bool isRightSelected;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          Expanded(
+            child: _segItem(
+              label: leftLabel,
+              selected: !isRightSelected,
+              onTap: () => onChanged(false),
+              cs: cs,
+              tt: tt,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _segItem(
+              label: rightLabel,
+              selected: isRightSelected,
+              onTap: () => onChanged(true),
+              cs: cs,
+              tt: tt,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _segItem({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    required ColorScheme cs,
+    required TextTheme tt,
+  }) {
+    return Material(
+      color: selected ? cs.primary : Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Center(
+          child: Text(
+            label,
+            style: tt.labelLarge?.copyWith(
+              color: selected ? cs.onPrimary : cs.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChipDropdown<T> extends StatelessWidget {
+  const _ChipDropdown({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.items,
+    this.itemLabel,
+    this.onChanged,
+  });
+
+  final String label;
+  final T? value;
+  final List<T> items;
+  final String Function(T value)? itemLabel;
+  final ValueChanged<T?>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final labeler = (T v) => itemLabel != null ? itemLabel!(v) : v.toString();
+
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          hint: Text(label, style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
+          icon: Icon(Icons.keyboard_arrow_down, color: cs.onSurfaceVariant),
+          dropdownColor: cs.surfaceContainerHigh,
+          style: tt.bodyLarge?.copyWith(color: cs.onSurface),
+          items: items.map((e) {
+            return DropdownMenuItem<T>(
+              value: e,
+              child: Text(labeler(e)),
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}

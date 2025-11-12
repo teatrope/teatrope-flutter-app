@@ -4,6 +4,10 @@ import 'package:teatrope_flutter_app/core/ui/theme.dart';
 import 'package:teatrope_flutter_app/features/auth/data/auth_service.dart';
 import 'package:teatrope_flutter_app/features/auth/pages/signup_page.dart';
 import 'package:teatrope_flutter_app/features/auth/presentation/blocs/signin_bloc.dart';
+import 'package:teatrope_flutter_app/features/home/data/obra_service.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_bloc.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_event.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_state.dart';
 
 
 void main() {
@@ -25,11 +29,16 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
   final MaterialTheme theme = MaterialTheme(TextTheme());
-      return MaterialApp(
+      return BlocProvider(
+        create: (context) => 
+        HomeBloc(service: ObraService())
+        ..add(const GetObrasByGenre(genre: GenresType.all)),
+      child: MaterialApp(
         theme: theme.light(),
         darkTheme: theme.dark(),
         debugShowCheckedModeBanner: false,
         home: Scaffold(body: SafeArea (child: SignUpPage())),
+      ),
       );
   }
 }
