@@ -124,7 +124,6 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 16),
 
-              // Carrusel (altura fija + ancho por AspectRatio = no overflow)
               BlocSelector<HomeBloc, HomeState, (Status, List<Obra>, String?)>(
                 selector: (s) => (s.status, s.obras, s.message),
                 builder: (context, tuple) {
@@ -169,7 +168,7 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, i) {
                         final obra = obras[i];
                         return AspectRatio(
-                          aspectRatio: 2 / 3, // o 3/4 si prefieres más anchas
+                          aspectRatio: 2 / 3, 
                           child: GestureDetector(
                             onTap: () => Navigator.push(
                               context,

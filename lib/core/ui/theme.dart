@@ -66,7 +66,7 @@ class MaterialTheme {
       surfaceContainerLowest: Color(0xFFFFFFFF),
       surfaceContainerLow: Color(0xFFF3F3F6),
       surfaceContainer: Color(0xFFEEEEF1),
-      surfaceContainerHigh: Color(0xFFE8E9EC),
+      surfaceContainerHigh: Color.fromARGB(255, 43, 43, 56),
       surfaceContainerHighest: Color(0xFFE2E3E6),
     );
   }
@@ -359,20 +359,21 @@ class MaterialTheme {
     return base.copyWith(
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withOpacity(0.08),
-        hintStyle: const TextStyle(color: Colors.white70),
+        // (solo cambio de color — sin tocar estructura)
+        fillColor: scheme.surfaceContainerHigh.withOpacity(0.6),
+        hintStyle: TextStyle(color: scheme.onSurfaceVariant),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.25)),
+          borderSide: BorderSide(color: scheme.outlineVariant.withOpacity(0.25)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.25)),
+          borderSide: BorderSide(color: scheme.outlineVariant.withOpacity(0.25)),
         ),
-        focusedBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-          borderSide: BorderSide(color: Colors.white70, width: 1.2),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(16)),
+          borderSide: BorderSide(color: scheme.onSurfaceVariant, width: 1.2),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(

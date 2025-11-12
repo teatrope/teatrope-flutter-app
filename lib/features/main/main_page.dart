@@ -24,9 +24,9 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     // Si quieres disparar carga inicial de “TODOS” desde aquí:
-    // Future.microtask(() =>
-    //   context.read<HomeBloc>().add(const LoadAllObras()),
-    // );
+     //Future.microtask(() =>
+      // context.read<HomeBloc>().add(const LoadAllObras()),
+     //);
   }
 
   @override
@@ -39,7 +39,7 @@ class _MainPageState extends State<MainPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // para 4 ítems
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: (value) => setState(() => _selectedIndex = value),
         items: const [
