@@ -1,4 +1,3 @@
-// features/home/domain/Obra.dart
 class Obra {
   final String id;
   final String nombre;
@@ -8,7 +7,7 @@ class Obra {
   final double latitud;
   final double longitud;
   final String imageUrl;
-  final String genero; // <-- NUEVO
+  final String genero;
 
   const Obra({
     required this.id,
@@ -19,7 +18,7 @@ class Obra {
     required this.latitud,
     required this.longitud,
     required this.imageUrl,
-    required this.genero, // <-- NUEVO
+    required this.genero,
   });
 
   factory Obra.fromJson(Map<String, dynamic> json) {
@@ -41,7 +40,32 @@ class Obra {
       latitud: _d(json['latitud'] ?? teatro['latitud']),
       longitud: _d(json['longitud'] ?? teatro['longitud']),
       imageUrl: _s(json['image_url'] ?? teatro['image_url']),
-      genero: _s(json['genero']), // <-- viene así en tus ejemplos
+      genero: _s(json['genero']),
     );
   }
+
+  // ✅ necesarios para SQLite
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'nombre': nombre,
+        'descripcion': descripcion,
+        'calle': calle,
+        'distrito': distrito,
+        'latitud': latitud,
+        'longitud': longitud,
+        'image_url': imageUrl,
+        'genero': genero,
+      };
+
+  factory Obra.fromMap(Map<String, dynamic> map) => Obra(
+        id: map['id']?.toString() ?? '',
+        nombre: map['nombre']?.toString() ?? '',
+        descripcion: map['descripcion']?.toString() ?? '',
+        calle: map['calle']?.toString() ?? '',
+        distrito: map['distrito']?.toString() ?? '',
+        latitud: (map['latitud'] is num) ? (map['latitud'] as num).toDouble() : double.tryParse('${map['latitud']}') ?? 0.0,
+        longitud: (map['longitud'] is num) ? (map['longitud'] as num).toDouble() : double.tryParse('${map['longitud']}') ?? 0.0,
+        imageUrl: map['image_url']?.toString() ?? '',
+        genero: map['genero']?.toString() ?? '',
+      );
 }

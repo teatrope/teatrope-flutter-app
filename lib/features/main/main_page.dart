@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/pages/home_page.dart';
-
+import 'package:teatrope_flutter_app/features/favorites/presentation/pages/favorite_list_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -12,22 +12,12 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  // Tus páginas (puedes sustituir por las reales)
   late final List<Widget> _pages = const [
     HomePage(),
     ComingSoonPage(),
-    FavoritesPage(),
+    FavoriteListPage(),   // ← aquí va tu lista de favoritos
     ProfilePage(),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    // Si quieres disparar carga inicial de “TODOS” desde aquí:
-     //Future.microtask(() =>
-      // context.read<HomeBloc>().add(const LoadAllObras()),
-     //);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,12 +63,6 @@ class ComingSoonPage extends StatelessWidget {
   const ComingSoonPage({super.key});
   @override
   Widget build(BuildContext context) => const Center(child: Text('Coming soon'));
-}
-
-class FavoritesPage extends StatelessWidget {
-  const FavoritesPage({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Favorites'));
 }
 
 class ProfilePage extends StatelessWidget {
