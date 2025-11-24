@@ -1,18 +1,10 @@
-// lib/features/main_page.dart  (o donde lo tengas)
+// lib/features/main_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dio/dio.dart';
 
 import 'package:teatrope_flutter_app/features/home/presentation/pages/home_page.dart';
 import 'package:teatrope_flutter_app/features/favorites/presentation/pages/favorite_list_page.dart';
-
-// PROFILE
 import 'package:teatrope_flutter_app/features/profile/presentation/pages/profile_page.dart';
-import 'package:teatrope_flutter_app/features/profile/presentation/blocs/profile_bloc.dart';
-import 'package:teatrope_flutter_app/features/profile/presentation/blocs/profile_event.dart';
-import 'package:teatrope_flutter_app/features/profile/data/profile_repository_impl.dart';
-import 'package:teatrope_flutter_app/features/profile/presentation/datasource/profile_remote_ds.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -24,20 +16,12 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  late final List<Widget> _pages = [
-    const HomePage(),
-    const ComingSoonPage(),
-    const FavoriteListPage(),
-
-    // 👉 Pestaña de PROFILE envuelta con su BlocProvider
-    BlocProvider(
-      create: (context) => ProfileBloc(
-        repository: ProfileRepositoryImpl(
-          remote: ProfileRemoteDataSource(Dio()),
-        ),
-      )..add(const LoadProfile()),
-      child: const ProfilePage(),
-    ),
+  // Ahora TODO puede ser const
+  final List<Widget> _pages = const [
+    HomePage(),
+    ComingSoonPage(),
+    FavoriteListPage(),
+    ProfilePage(),
   ];
 
   @override
@@ -80,7 +64,6 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-// Puedes dejar este placeholder aquí o moverlo a su propio archivo
 class ComingSoonPage extends StatelessWidget {
   const ComingSoonPage({super.key});
 
