@@ -4,7 +4,7 @@ import 'package:teatrope_flutter_app/features/profile/data/models/user_preferenc
 import 'package:teatrope_flutter_app/features/profile/data/models/user_profile.dart';
 
 class ProfileState extends Equatable {
-  final Status status;                     // 👈 AQUÍ Status
+  final Status status;
   final UserProfile? profile;
   final UserPreferences? preferences;
   final String? errorMessage;
@@ -19,7 +19,7 @@ class ProfileState extends Equatable {
   });
 
   factory ProfileState.initial() => const ProfileState(
-        status: Status.initial,          // 👈 AQUÍ Status.initial
+        status: Status.initial,
         profile: null,
         preferences: null,
         errorMessage: null,
@@ -27,7 +27,7 @@ class ProfileState extends Equatable {
       );
 
   ProfileState copyWith({
-    Status? status,                      // 👈 AQUÍ Status?
+    Status? status,
     UserProfile? profile,
     UserPreferences? preferences,
     String? errorMessage,
