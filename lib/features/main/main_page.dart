@@ -1,10 +1,16 @@
 // lib/features/main_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 
 import 'package:teatrope_flutter_app/features/home/presentation/pages/home_page.dart';
 import 'package:teatrope_flutter_app/features/favorites/presentation/pages/favorite_list_page.dart';
 import 'package:teatrope_flutter_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:teatrope_flutter_app/features/coming_soon/presentation/pages/coming_soon_page.dart';
+import 'package:teatrope_flutter_app/features/coming_soon/presentation/blocs/coming_soon_bloc.dart';
+import 'package:teatrope_flutter_app/features/coming_soon/presentation/blocs/coming_soon_event.dart';
+import 'package:teatrope_flutter_app/features/coming_soon/data/coming_soon_service.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -16,27 +22,32 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  // Ahora TODO puede ser const
-  final List<Widget> _pages = const [
-    HomePage(),
-    ComingSoonPage(),
-    FavoriteListPage(),
-    ProfilePage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
-          children: _pages,
+          children: [
+            const HomePage(),
+            BlocProvider(
+              create: (_) => ComingSoonBloc(
+                service: ComingSoonService(),
+              )..add(const LoadComingSoon()),
+              child: const ComingSoonPage(),
+            ),
+            const FavoriteListPage(),
+            const ProfilePage(),
+          ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: (value) => setState(() => _selectedIndex = value),
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.local_movies_outlined),
@@ -60,17 +71,6 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class ComingSoonPage extends StatelessWidget {
-  const ComingSoonPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Coming soon'),
     );
   }
 }

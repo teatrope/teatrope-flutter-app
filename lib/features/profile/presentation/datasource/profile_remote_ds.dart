@@ -1,52 +1,160 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+
 import 'package:teatrope_flutter_app/core/constants/api_constants.dart';
+import 'package:teatrope_flutter_app/core/token/token_storage.dart';
 import 'package:teatrope_flutter_app/features/profile/data/models/user_profile.dart';
 import 'package:teatrope_flutter_app/features/profile/data/models/user_preferences.dart';
 
 class ProfileRemoteDataSource {
   final Dio _dio;
+  final TokenStorage _tokenStorage;
 
-  ProfileRemoteDataSource(this._dio);
+  ProfileRemoteDataSource(this._dio) : _tokenStorage = TokenStorage();
 
-  // === PROFILE ===
+  // claves de SharedPreferences
+  static const _kPrefsKey = 'user_preferences';
+  static const _kUserEmailKey = 'user_email';
+  static const _kUserPasswordKey = 'user_password';
 
+  Future<String?> _getSavedEmail() async {
+    final sp = await SharedPreferences.getInstance();
+    return sp.getString(_kUserEmailKey);
+  }
+
+  // =================== GET PROFILE ===================
   Future<UserProfile> fetchProfile() async {
-    final token = await _getToken();
+    final token = await _tokenStorage.read();
+    if (token == null || token.isEmpty) {
+      throw Exception('No autenticado');
+    }
+
+    final savedEmail = await _getSavedEmail();
+    if (savedEmail == null || savedEmail.isEmpty) {
+      throw Exception('No hay email de usuario guardado en la app');
+    }
 
     final response = await _dio.get(
-      '${ApiConstants.baseUrl}users/me/', // TODO: ajusta endpoint real
+      '${ApiConstants.baseUrl}${ApiConstants.usersEndpoint}',
       options: Options(
         headers: {
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
+          'Accept': 'application/json',
         },
       ),
     );
 
-    return UserProfile.fromJson(response.data as Map<String, dynamic>);
+    final data = response.data;
+
+    // Si el backend devuelve una LISTA de usuarios
+    if (data is List) {
+      final list = data.cast<Map<String, dynamic>>();
+
+      final userJson = list.firstWhere(
+        (u) {
+          final email = (u['email'] ?? '').toString().toLowerCase();
+          return email == savedEmail.toLowerCase();
+        },
+        orElse: () {
+          throw Exception(
+            'Usuario con email $savedEmail no encontrado en /auth/users/.',
+          );
+        },
+      );
+
+      return UserProfile.fromJson(userJson);
+    }
+
+    // Si el backend devuelve UN SOLO usuario (objeto)
+    if (data is Map) {
+      return UserProfile.fromJson(Map<String, dynamic>.from(data));
+    }
+
+    throw Exception('Respuesta inesperada de /auth/users/');
   }
 
+  // =================== UPDATE PROFILE ===================
   Future<UserProfile> updateProfile(UserProfile profile) async {
-    final token = await _getToken();
+    final token = await _tokenStorage.read();
+    if (token == null || token.isEmpty) {
+      throw Exception('No autenticado');
+    }
 
-    final response = await _dio.put(
-      '${ApiConstants.baseUrl}users/me/', // TODO: ajusta endpoint real
-      data: profile.toJson(),
+    // Si no tenemos id, lo obtenemos primero
+    String id = profile.id;
+    if (id.isEmpty) {
+      final current = await fetchProfile();
+      id = current.id;
+    }
+
+    final endpoint =
+        '${ApiConstants.baseUrl}${ApiConstants.userDetailEndpoint.replaceAll('{id}', id)}';
+
+    // Enviamos solo los campos editables
+    final body = <String, dynamic>{
+      'name': profile.name,
+      'email': profile.email,
+      'avatar_url': profile.avatarUrl,
+      'phone': profile.phone,
+      'city': profile.city,
+    };
+
+    final response = await _dio.patch(
+      endpoint,
+      data: body,
       options: Options(
         headers: {
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
       ),
     );
 
-    return UserProfile.fromJson(response.data as Map<String, dynamic>);
+    final updatedJson = response.data as Map<String, dynamic>;
+
+    // Si cambió el email, lo guardamos también en local
+    final sp = await SharedPreferences.getInstance();
+    if (updatedJson['email'] != null) {
+      await sp.setString(_kUserEmailKey, updatedJson['email'] as String);
+    }
+
+    return UserProfile.fromJson(updatedJson);
   }
 
-  // === PREFERENCES (guardadas en local con SharedPreferences) ===
+  // =================== UPDATE PASSWORD ===================
+  Future<void> updatePassword(String newPassword) async {
+    final token = await _tokenStorage.read();
+    if (token == null || token.isEmpty) {
+      throw Exception('No autenticado');
+    }
 
-  static const _kPrefsKey = 'user_preferences';
+    // Necesitamos el id del usuario actual
+    final profile = await fetchProfile();
+    final endpoint =
+        '${ApiConstants.baseUrl}${ApiConstants.userDetailEndpoint.replaceAll('{id}', profile.id)}';
 
+    await _dio.patch(
+      endpoint,
+      data: {
+        'password': newPassword,
+      },
+      options: Options(
+        headers: {
+          'Authorization': 'Token $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+
+    // Guardamos la nueva contraseña en local (solo para este proyecto)
+    final sp = await SharedPreferences.getInstance();
+    await sp.setString(_kUserPasswordKey, newPassword);
+  }
+
+  // =================== PREFERENCIAS (LOCAL) ===================
   Future<UserPreferences> getPreferences() async {
     final sp = await SharedPreferences.getInstance();
     final jsonString = sp.getString(_kPrefsKey);
@@ -55,10 +163,7 @@ class ProfileRemoteDataSource {
       return UserPreferences.initial();
     }
 
-    final map = Map<String, dynamic>.from(
-      // ignore: deprecated_member_use
-      _decode(jsonString),
-    );
+    final map = Map<String, dynamic>.from(_decode(jsonString));
     return UserPreferences.fromJson(map);
   }
 
@@ -69,23 +174,18 @@ class ProfileRemoteDataSource {
     return prefs;
   }
 
+  // =================== LOGOUT / CLEAR SESSION ===================
   Future<void> clearSession() async {
+    await _tokenStorage.clear();
     final sp = await SharedPreferences.getInstance();
-    await sp.remove('access_token');
     await sp.remove(_kPrefsKey);
+    await sp.remove(_kUserEmailKey);
+    await sp.remove(_kUserPasswordKey);
   }
 
-  // === Helpers ===
-
-  Future<String?> _getToken() async {
-    final sp = await SharedPreferences.getInstance();
-    return sp.getString('access_token');
-  }
-
-  // Encoders simples para evitar dependencias extras
+  // =================== HELPERS ===================
   Map<String, dynamic> _decode(String source) {
     return Map<String, dynamic>.from(
-      // ignore: unnecessary_cast
       (jsonDecode(source) as Map<String, dynamic>),
     );
   }

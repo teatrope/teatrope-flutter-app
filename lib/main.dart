@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 
 import 'package:teatrope_flutter_app/core/ui/theme.dart';
+import 'package:teatrope_flutter_app/core/token/token_storage.dart';
 
 // Auth
 import 'package:teatrope_flutter_app/features/auth/data/auth_service.dart';
 import 'package:teatrope_flutter_app/features/auth/pages/signup_page.dart';
+import 'package:teatrope_flutter_app/features/auth/pages/signin_page.dart';
 import 'package:teatrope_flutter_app/features/auth/presentation/blocs/signin_bloc.dart';
 
 // Home
@@ -33,7 +35,11 @@ import 'package:teatrope_flutter_app/features/profile/presentation/blocs/profile
 import 'package:teatrope_flutter_app/features/profile/data/profile_repository_impl.dart';
 import 'package:teatrope_flutter_app/features/profile/presentation/datasource/profile_remote_ds.dart';
 
-void main() {
+// Main
+import 'package:teatrope_flutter_app/features/main/main_page.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   final dio = Dio();
 
   runApp(
@@ -71,16 +77,55 @@ void main() {
   );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
   @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  final MaterialTheme theme = MaterialTheme(TextTheme());
+  final TokenStorage _tokenStorage = TokenStorage();
+  bool _isAuthenticated = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    final token = await _tokenStorage.read();
+    setState(() {
+      _isAuthenticated = token != null && token.isNotEmpty;
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final MaterialTheme theme = MaterialTheme(TextTheme());
+    if (_isLoading) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: MaterialTheme.darkLinearGradient,
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ),
+      );
+    }
 
     return MaterialApp(
       theme: theme.light(),
       darkTheme: theme.dark(),
+      themeMode: ThemeMode.dark, // Force dark theme
       debugShowCheckedModeBanner: false,
       routes: {
         '/notifications': (_) => BlocProvider(
@@ -90,12 +135,13 @@ class MainApp extends StatelessWidget {
               child: const NotificationsPage(),
             ),
       },
-      // luego de signup navegarás a MainPage()
-      home: const Scaffold(
-        body: SafeArea(
-          child: SignUpPage(),
-        ),
-      ),
+      home: _isAuthenticated
+          ? const MainPage()
+          : const Scaffold(
+              body: SafeArea(
+                child: SignUpPage(),
+              ),
+            ),
     );
   }
 }

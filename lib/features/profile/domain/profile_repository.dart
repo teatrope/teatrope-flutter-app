@@ -5,6 +5,8 @@ abstract class ProfileRepository {
   Future<UserProfile> getProfile();
   Future<UserProfile> updateProfile(UserProfile profile);
 
+  Future<void> updatePassword(String newPassword);
+
   Future<UserPreferences> getPreferences();
   Future<UserPreferences> updatePreferences(UserPreferences preferences);
 

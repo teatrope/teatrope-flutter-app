@@ -34,8 +34,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         throw Exception('No autenticado. Inicia sesión.');
       }
 
+      // Si es "all" o "TODOS", no pasar género para traer todas las obras
+      final genero = event.genre == GenresType.all ? null : event.genre.label;
+      
       final obras = await service.getObras(
-        genero: event.genre.label, // 'MUSICAL', 'DRAMA', ...
+        genero: genero, // null para todas, o el género específico
         token: token,
       );
 

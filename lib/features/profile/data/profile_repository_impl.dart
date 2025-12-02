@@ -9,23 +9,29 @@ class ProfileRepositoryImpl implements ProfileRepository {
   ProfileRepositoryImpl({required this.remote});
 
   @override
-  Future<UserProfile> getProfile() async {
+  Future<UserProfile> getProfile() {
     return remote.fetchProfile();
   }
 
   @override
-  Future<UserProfile> updateProfile(UserProfile profile) async {
+  Future<UserProfile> updateProfile(UserProfile profile) {
     return remote.updateProfile(profile);
   }
 
   @override
-  Future<UserPreferences> getPreferences() async {
+  Future<void> updatePassword(String newPassword) {
+    return remote.updatePassword(newPassword);
+  }
+
+  @override
+  Future<UserPreferences> getPreferences() {
     return remote.getPreferences();
   }
 
   @override
   Future<UserPreferences> updatePreferences(
-      UserPreferences preferences) async {
+      UserPreferences preferences,
+      ) {
     return remote.savePreferences(preferences);
   }
 

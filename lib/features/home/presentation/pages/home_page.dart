@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:teatrope_flutter_app/core/enums/status.dart';
 import 'package:teatrope_flutter_app/core/ui/theme.dart'; // DarkBlurBackground
+import 'package:teatrope_flutter_app/core/token/token_storage.dart';
 import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_bloc.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_event.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_state.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/pages/obra_detail_page.dart';
 import 'package:teatrope_flutter_app/features/home/widgets/obra_card.dart';
+import 'package:teatrope_flutter_app/features/search/data/search_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -62,7 +64,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 16),
 
-              // City + ajustes
+              // City + search + ajustes
               Row(
                 children: [
                   Expanded(
@@ -72,6 +74,12 @@ class _HomePageState extends State<HomePage> {
                       items: _cities,
                       onChanged: (v) => setState(() => _selectedCity = v ?? _selectedCity),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  _roundedIcon(
+                    context,
+                    Icons.search,
+                    onTap: () => _showSearchDialog(context),
                   ),
                   const SizedBox(width: 8),
                   _roundedIcon(context, Icons.tune, onTap: () {}),
@@ -92,7 +100,15 @@ class _HomePageState extends State<HomePage> {
                 leftLabel: 'Services',
                 rightLabel: 'Theaters',
                 isRightSelected: _isTheaters,
-                onChanged: (v) => setState(() => _isTheaters = v),
+                onChanged: (v) {
+                  setState(() => _isTheaters = v);
+                  // When switching, reload with current genre
+                  if (_selectedGenre != null) {
+                    context.read<HomeBloc>().add(GetObrasByGenre(genre: _selectedGenre!));
+                  } else {
+                    context.read<HomeBloc>().add(const GetObrasByGenre(genre: GenresType.all));
+                  }
+                },
               ),
               const SizedBox(height: 12),
 
@@ -204,6 +220,101 @@ class _HomePageState extends State<HomePage> {
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Icon(icon, color: cs.onSurfaceVariant),
+        ),
+      ),
+    );
+  }
+
+  void _showSearchDialog(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final searchController = TextEditingController();
+    final searchService = SearchService();
+    bool loading = false;
+    List<Obra> searchResults = [];
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: cs.surfaceContainerHigh,
+          title: Text(
+            'Search service actor',
+            style: tt.titleLarge?.copyWith(color: cs.onSurface),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: searchController,
+                style: TextStyle(color: cs.onSurface),
+                decoration: InputDecoration(
+                  hintText: 'Search...',
+                  hintStyle: TextStyle(color: cs.onSurfaceVariant),
+                  prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
+                ),
+                onSubmitted: (query) async {
+                  if (query.isEmpty) return;
+                  setState(() => loading = true);
+                  try {
+                    final token = await TokenStorage().read();
+                    if (token != null && token.isNotEmpty) {
+                      final results = await searchService.searchObras(
+                        query: query,
+                        token: token,
+                      );
+                      setState(() {
+                        searchResults = results;
+                        loading = false;
+                      });
+                    }
+                  } catch (e) {
+                    setState(() => loading = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: ${e.toString()}')),
+                    );
+                  }
+                },
+              ),
+              if (loading)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              if (searchResults.isNotEmpty)
+                SizedBox(
+                  height: 300,
+                  child: ListView.builder(
+                    itemCount: searchResults.length,
+                    itemBuilder: (context, index) {
+                      final obra = searchResults[index];
+                      return ListTile(
+                        leading: obra.imageUrl.isNotEmpty
+                            ? Image.network(obra.imageUrl, width: 50, height: 50, fit: BoxFit.cover)
+                            : const Icon(Icons.image),
+                        title: Text(obra.nombre, style: TextStyle(color: cs.onSurface)),
+                        subtitle: Text(obra.genero, style: TextStyle(color: cs.onSurfaceVariant)),
+                        onTap: () {
+                          Navigator.of(dialogContext).pop();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ObraDetailPage(obra: obra),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text('Close', style: TextStyle(color: cs.primary)),
+            ),
+          ],
         ),
       ),
     );

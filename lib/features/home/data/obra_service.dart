@@ -45,11 +45,12 @@ class ObraService {
         .map((e) => Obra.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
 
-    // Filtro de respaldo por si el backend ignora el query
-    if (!sinFiltro) {
-      final g = genero!.toUpperCase().trim();
+    // Si no hay filtro (genero es null o vacío), retornar todas las obras
+    // Si hay filtro, aplicar filtro de respaldo por si el backend ignora el query
+    if (!sinFiltro && genero != null && genero.trim().isNotEmpty) {
+      final g = genero.toUpperCase().trim();
       return obras.where((o) => o.genero.toUpperCase().trim() == g).toList();
     }
-    return obras;
+    return obras; // Retornar todas si no hay filtro
   }
 }
