@@ -214,3 +214,4 @@ class ComingSoonPage extends StatelessWidget {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
+
