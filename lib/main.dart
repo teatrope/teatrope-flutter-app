@@ -35,6 +35,10 @@ import 'package:teatrope_flutter_app/features/profile/presentation/blocs/profile
 import 'package:teatrope_flutter_app/features/profile/data/profile_repository_impl.dart';
 import 'package:teatrope_flutter_app/features/profile/presentation/datasource/profile_remote_ds.dart';
 
+// Admin
+import 'package:teatrope_flutter_app/features/admin/presentation/blocs/admin_bloc.dart';
+import 'package:teatrope_flutter_app/features/admin/presentation/blocs/admin_event.dart';
+
 // Main
 import 'package:teatrope_flutter_app/features/main/main_page.dart';
 
@@ -46,9 +50,7 @@ void main() async {
     MultiBlocProvider(
       providers: [
         // Sign in
-        BlocProvider(
-          create: (_) => SigninBloc(authService: AuthService()),
-        ),
+        BlocProvider(create: (_) => SigninBloc(authService: AuthService())),
 
         // Favorites
         BlocProvider(
@@ -59,8 +61,9 @@ void main() async {
 
         // Home
         BlocProvider(
-          create: (_) => HomeBloc(service: ObraService())
-            ..add(const GetObrasByGenre(genre: GenresType.all)),
+          create: (_) =>
+              HomeBloc(service: ObraService())
+                ..add(const GetObrasByGenre(genre: GenresType.all)),
         ),
 
         // Profile 👈 AQUI agregamos ProfileBloc global
@@ -70,6 +73,12 @@ void main() async {
               remote: ProfileRemoteDataSource(dio),
             ),
           )..add(const LoadProfile()),
+        ),
+
+        // Admin
+        BlocProvider(
+          create: (_) =>
+              AdminBloc(obraService: ObraService())..add(const LoadTheaters()),
         ),
       ],
       child: const MainApp(),
@@ -114,9 +123,7 @@ class _MainAppState extends State<MainApp> {
             decoration: const BoxDecoration(
               gradient: MaterialTheme.darkLinearGradient,
             ),
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           ),
         ),
       );
@@ -129,19 +136,15 @@ class _MainAppState extends State<MainApp> {
       debugShowCheckedModeBanner: false,
       routes: {
         '/notifications': (_) => BlocProvider(
-              create: (_) => NotificationsBloc(
-                service: NotificationsService(),
-              )..add(const LoadNotifications()),
-              child: const NotificationsPage(),
-            ),
+          create: (_) =>
+              NotificationsBloc(service: NotificationsService())
+                ..add(const LoadNotifications()),
+          child: const NotificationsPage(),
+        ),
       },
       home: _isAuthenticated
           ? const MainPage()
-          : const Scaffold(
-              body: SafeArea(
-                child: SignUpPage(),
-              ),
-            ),
+          : const Scaffold(body: SafeArea(child: SignUpPage())),
     );
   }
 }

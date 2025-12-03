@@ -10,6 +10,12 @@ import 'package:teatrope_flutter_app/features/profile/presentation/blocs/profile
 import 'package:teatrope_flutter_app/features/profile/presentation/blocs/profile_state.dart';
 import 'package:teatrope_flutter_app/features/profile/presentation/pages/settings_page.dart';
 
+// Admin
+import 'package:teatrope_flutter_app/features/admin/presentation/blocs/admin_bloc.dart';
+import 'package:teatrope_flutter_app/features/admin/presentation/blocs/admin_state.dart';
+import 'package:teatrope_flutter_app/features/admin/presentation/blocs/admin_event.dart';
+import 'package:teatrope_flutter_app/features/home/domain/theater.dart';
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -119,11 +125,178 @@ class _ProfilePageState extends State<ProfilePage> {
                               );
                             },
                           ),
+
+                          const SizedBox(height: 32),
+                          const Divider(),
+                          const SizedBox(height: 16),
+
+                          // Admin Panel Section
+                          Text(
+                            'Admin Panel',
+                            style: tt.titleLarge?.copyWith(
+                              color: cs.onSurface,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const _AdminPanel(),
                         ],
                       ),
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+}
+
+class _AdminPanel extends StatelessWidget {
+  const _AdminPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AdminBloc, AdminState>(
+      builder: (context, state) {
+        final cs = Theme.of(context).colorScheme;
+        final tt = Theme.of(context).textTheme;
+
+        if (state.status == Status.loading && state.theaters.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Theater Selector
+            DropdownButtonFormField<Theater>(
+              value: state.selectedTheater,
+              decoration: InputDecoration(
+                labelText: 'Select Theater',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: cs.surfaceContainerHigh,
+              ),
+              dropdownColor: cs.surfaceContainer,
+              items: state.theaters.map((theater) {
+                return DropdownMenuItem(
+                  value: theater,
+                  child: Text(
+                    theater.nombre,
+                    style: TextStyle(color: cs.onSurface),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: (theater) {
+                if (theater != null) {
+                  context.read<AdminBloc>().add(SelectTheater(theater));
+                }
+              },
+              isExpanded: true,
+            ),
+            const SizedBox(height: 24),
+
+            // Works List Header
+            if (state.selectedTheater != null) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Plays',
+                    style: tt.titleMedium?.copyWith(
+                      color: cs.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      // TODO: Implement Add Work
+                    },
+                    icon: const Icon(Icons.add_circle),
+                    color: cs.primary,
+                    tooltip: 'Add Play',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Works List
+              if (state.status == Status.loading)
+                const Center(child: CircularProgressIndicator())
+              else if (state.obras.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'No works found for this theater.',
+                      style: TextStyle(color: cs.onSurfaceVariant),
+                    ),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: state.obras.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final obra = state.obras[index];
+                    return Card(
+                      color: cs.surfaceContainerLow,
+                      child: ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            obra.imageUrl,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 50,
+                              height: 50,
+                              color: cs.surfaceContainerHigh,
+                              child: const Icon(Icons.broken_image),
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          obra.nombre,
+                          style: TextStyle(color: cs.onSurface),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          obra.genero,
+                          style: TextStyle(color: cs.onSurfaceVariant),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 20),
+                              color: cs.primary,
+                              onPressed: () {
+                                // TODO: Implement Edit Work
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, size: 20),
+                              color: cs.error,
+                              onPressed: () {
+                                // TODO: Implement Delete Work
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ],
         );
       },
     );

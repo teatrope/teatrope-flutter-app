@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 import 'package:teatrope_flutter_app/features/home/presentation/pages/home_page.dart';
 import 'package:teatrope_flutter_app/features/favorites/presentation/pages/favorite_list_page.dart';
 import 'package:teatrope_flutter_app/features/profile/presentation/pages/profile_page.dart';
@@ -31,9 +30,9 @@ class _MainPageState extends State<MainPage> {
           children: [
             const HomePage(),
             BlocProvider(
-              create: (_) => ComingSoonBloc(
-                service: ComingSoonService(),
-              )..add(const LoadComingSoon()),
+              create: (_) =>
+                  ComingSoonBloc(service: ComingSoonService())
+                    ..add(const LoadComingSoon()),
               child: const ComingSoonPage(),
             ),
             const FavoriteListPage(),
@@ -67,7 +66,7 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: 'Profile',
+            label: 'Admin',
           ),
         ],
       ),
