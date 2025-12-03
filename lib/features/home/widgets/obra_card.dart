@@ -10,9 +10,9 @@ class ObraCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    final subtitle = (obra.descripcion.isEmpty)
-        ? [obra.distrito, obra.calle].where((e) => e.isNotEmpty).join(' • ')
-        : obra.descripcion;
+    final subtitle = (obra.teatroNombre.isNotEmpty)
+        ? obra.teatroNombre
+        : [obra.distrito, obra.calle].where((e) => e.isNotEmpty).join(' • ');
 
     return Card(
       clipBehavior: Clip.antiAlias,

@@ -19,6 +19,7 @@ class HomeState {
   final GenresType selectedGenre;
   final List<Obra> obras; // <- NO NULLABLE
   final List<Theater> theaters; // <- Lista de teatros
+  final List<String> districts; // <- Lista de distritos
   final String? message;
 
   const HomeState({
@@ -26,6 +27,7 @@ class HomeState {
     this.selectedGenre = GenresType.all,
     this.obras = const [], // <- lista vacía por defecto
     this.theaters = const [], // <- lista vacía por defecto
+    this.districts = const [], // <- lista vacía por defecto
     this.message,
   });
 
@@ -34,6 +36,7 @@ class HomeState {
     GenresType? selectedGenre,
     List<Obra>? obras, // <- parámetro opcional
     List<Theater>? theaters, // <- parámetro opcional
+    List<String>? districts, // <- parámetro opcional
     String? message,
   }) {
     return HomeState(
@@ -41,6 +44,7 @@ class HomeState {
       selectedGenre: selectedGenre ?? this.selectedGenre,
       obras: obras ?? this.obras, // <- fallback a actual
       theaters: theaters ?? this.theaters, // <- fallback a actual
+      districts: districts ?? this.districts, // <- fallback a actual
       message: message ?? this.message,
     );
   }

@@ -63,7 +63,19 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       final theaters = await service.getTheaters(token: token);
 
-      emit(state.copyWith(status: Status.success, theaters: theaters));
+      // Extraer distritos únicos y ordenarlos
+      final districts = theaters.map((t) => t.distrito).toSet().toList()
+        ..sort();
+      // Agregar opción 'All' al inicio
+      districts.insert(0, 'All');
+
+      emit(
+        state.copyWith(
+          status: Status.success,
+          theaters: theaters,
+          districts: districts,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(status: Status.failure, message: e.toString()));
     }

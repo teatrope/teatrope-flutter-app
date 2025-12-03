@@ -5,7 +5,6 @@ import 'package:teatrope_flutter_app/core/enums/status.dart';
 import 'package:teatrope_flutter_app/core/ui/theme.dart'; // DarkBlurBackground
 import 'package:teatrope_flutter_app/core/token/token_storage.dart';
 import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
-import 'package:teatrope_flutter_app/features/home/domain/theater.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_bloc.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_event.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_state.dart';
@@ -26,12 +25,19 @@ class _HomePageState extends State<HomePage> {
   static const double _carouselHeight = 300;
 
   final _cities = const ['Lima', 'Arequipa', 'Cusco'];
-  final _districts = const ['Surco', 'Miraflores', 'San Isidro'];
 
   String _selectedCity = 'Lima';
-  String _selectedDistrict = 'Surco';
+  String _selectedDistrict = 'All';
   GenresType? _selectedGenre;
   bool _isTheaters = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch initial data
+    context.read<HomeBloc>().add(const GetTheaters());
+    context.read<HomeBloc>().add(const GetObrasByGenre(genre: GenresType.all));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,154 +49,168 @@ class _HomePageState extends State<HomePage> {
       body: DarkBlurBackground(
         // mismo fondo usado en SignIn/SignUp
         child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            children: [
-              // Header
-              Row(
+          child: BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, state) {
+              // Use districts from state, default to ['All'] if empty
+              final districts = state.districts.isNotEmpty
+                  ? state.districts
+                  : ['All'];
+
+              // Filter logic
+              final filteredTheaters = (_selectedDistrict == 'All')
+                  ? state.theaters
+                  : state.theaters
+                        .where((t) => t.distrito == _selectedDistrict)
+                        .toList();
+
+              final filteredObras = (_selectedDistrict == 'All')
+                  ? state.obras
+                  : state.obras
+                        .where((o) => o.distrito == _selectedDistrict)
+                        .toList();
+
+              return ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 children: [
-                  Text(
-                    'teatrope',
-                    style: tt.headlineMedium?.copyWith(
-                      color: cs.primary, // acento rojo
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const Spacer(),
-                  _roundedIcon(
-                    context,
-                    Icons.notifications_none,
-                    onTap: () =>
-                        Navigator.of(context).pushNamed('/notifications'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // City + search + ajustes
-              Row(
-                children: [
-                  Expanded(
-                    child: _ChipDropdown<String>(
-                      label: 'Choose city',
-                      value: _selectedCity,
-                      items: _cities,
-                      onChanged: (v) =>
-                          setState(() => _selectedCity = v ?? _selectedCity),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _roundedIcon(
-                    context,
-                    Icons.search,
-                    onTap: () => _showSearchDialog(context),
-                  ),
-                  const SizedBox(width: 8),
-                  _roundedIcon(context, Icons.tune, onTap: () {}),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Promo
-              _PromoCard(
-                title: 'Know the promotions of',
-                highlight: 'Tuesdays & Monday',
-                onTap: () {},
-              ),
-              const SizedBox(height: 16),
-
-              // Toggle Services/Theaters
-              _SegmentedTwo(
-                leftLabel: 'Services',
-                rightLabel: 'Theaters',
-                isRightSelected: _isTheaters,
-                onChanged: (v) {
-                  setState(() => _isTheaters = v);
-                  // When switching, reload with current genre
-                  if (_isTheaters) {
-                    context.read<HomeBloc>().add(const GetTheaters());
-                  } else {
-                    if (_selectedGenre != null) {
-                      context.read<HomeBloc>().add(
-                        GetObrasByGenre(genre: _selectedGenre!),
-                      );
-                    } else {
-                      context.read<HomeBloc>().add(
-                        const GetObrasByGenre(genre: GenresType.all),
-                      );
-                    }
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // Filtros: District / Genre
-              Row(
-                children: [
-                  Expanded(
-                    child: _ChipDropdown<String>(
-                      label: 'District',
-                      value: _selectedDistrict,
-                      items: _districts,
-                      onChanged: (v) => setState(
-                        () => _selectedDistrict = v ?? _selectedDistrict,
+                  // Header
+                  Row(
+                    children: [
+                      Text(
+                        'teatrope',
+                        style: tt.headlineMedium?.copyWith(
+                          color: cs.primary, // acento rojo
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
+                      const Spacer(),
+                      _roundedIcon(
+                        context,
+                        Icons.notifications_none,
+                        onTap: () =>
+                            Navigator.of(context).pushNamed('/notifications'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ChipDropdown<GenresType>(
-                      label: 'Genre',
-                      value: _selectedGenre,
-                      items: GenresType.values,
-                      itemLabel: (g) => g.label,
-                      onChanged: (g) {
-                        setState(() => _selectedGenre = g);
-                        if (g != null) {
+                  const SizedBox(height: 16),
+
+                  // City + search + ajustes
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ChipDropdown<String>(
+                          label: 'Choose city',
+                          value: _selectedCity,
+                          items: _cities,
+                          onChanged: (v) => setState(
+                            () => _selectedCity = v ?? _selectedCity,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _roundedIcon(
+                        context,
+                        Icons.search,
+                        onTap: () => _showSearchDialog(context),
+                      ),
+                      const SizedBox(width: 8),
+                      _roundedIcon(context, Icons.tune, onTap: () {}),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Promo
+                  _PromoCard(
+                    title: 'Know the promotions of',
+                    highlight: 'Tuesdays & Monday',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Toggle Services/Theaters
+                  _SegmentedTwo(
+                    leftLabel: 'Services',
+                    rightLabel: 'Theaters',
+                    isRightSelected: _isTheaters,
+                    onChanged: (v) {
+                      setState(() => _isTheaters = v);
+                      // When switching, reload with current genre
+                      if (_isTheaters) {
+                        context.read<HomeBloc>().add(const GetTheaters());
+                      } else {
+                        if (_selectedGenre != null) {
                           context.read<HomeBloc>().add(
-                            GetObrasByGenre(genre: g),
+                            GetObrasByGenre(genre: _selectedGenre!),
+                          );
+                        } else {
+                          context.read<HomeBloc>().add(
+                            const GetObrasByGenre(genre: GenresType.all),
                           );
                         }
-                      },
-                    ),
+                      }
+                    },
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
-              BlocSelector<
-                HomeBloc,
-                HomeState,
-                (Status, List<Obra>, List<Theater>, String?)
-              >(
-                selector: (s) => (s.status, s.obras, s.theaters, s.message),
-                builder: (context, tuple) {
-                  final (status, obras, theaters, message) = tuple;
+                  // Filtros: District / Genre
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ChipDropdown<String>(
+                          label: 'District',
+                          value: _selectedDistrict,
+                          items: districts,
+                          itemLabel: (d) =>
+                              d == 'All' ? 'District All' : 'District $d',
+                          onChanged: (v) =>
+                              setState(() => _selectedDistrict = v ?? 'All'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _ChipDropdown<GenresType>(
+                          label: 'Genre',
+                          value: _selectedGenre,
+                          items: GenresType.values,
+                          itemLabel: (g) =>
+                              g == GenresType.all ? 'Genre All' : g.label,
+                          onChanged: (g) {
+                            setState(() => _selectedGenre = g);
+                            if (g != null) {
+                              context.read<HomeBloc>().add(
+                                GetObrasByGenre(genre: g),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
-                  if (status == Status.loading) {
-                    return SizedBox(
+                  if (state.status == Status.loading)
+                    SizedBox(
                       height: _carouselHeight,
                       child: const Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  if (status == Status.failure) {
-                    return Padding(
+                    )
+                  else if (state.status == Status.failure)
+                    Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
                         child: Text(
-                          message ?? 'Error',
+                          state.message ?? 'Error',
                           style: tt.bodyMedium?.copyWith(
                             color: cs.onSurfaceVariant,
                           ),
                         ),
                       ),
-                    );
-                  }
-
-                  if (_isTheaters) {
-                    if (theaters.isEmpty) {
-                      return Padding(
+                    )
+                  else if (_isTheaters) ...[
+                    if (filteredTheaters.isEmpty)
+                      Padding(
                         padding: const EdgeInsets.symmetric(vertical: 24),
                         child: Center(
                           child: Text(
@@ -200,68 +220,67 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ),
-                      );
-                    }
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio:
-                                0.7, // Adjust as needed to match card design
-                          ),
-                      itemCount: theaters.length,
-                      itemBuilder: (context, i) {
-                        return TheaterCard(theater: theaters[i]);
-                      },
-                    );
-                  }
-
-                  if (obras.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text(
-                          'No hay obras para mostrar',
-                          style: tt.bodyMedium?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio:
+                                  0.7, // Adjust as needed to match card design
+                            ),
+                        itemCount: filteredTheaters.length,
+                        itemBuilder: (context, i) {
+                          return TheaterCard(theater: filteredTheaters[i]);
+                        },
                       ),
-                    );
-                  }
-
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio:
-                              0.7, // Match Theaters grid aspect ratio
-                        ),
-                    itemCount: obras.length,
-                    itemBuilder: (context, i) {
-                      final obra = obras[i];
-                      return GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ObraDetailPage(obra: obra),
+                  ] else ...[
+                    if (filteredObras.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: Text(
+                            'No hay obras para mostrar',
+                            style: tt.bodyMedium?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         ),
-                        child: ObraCard(obra: obra),
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio:
+                                  0.7, // Match Theaters grid aspect ratio
+                            ),
+                        itemCount: filteredObras.length,
+                        itemBuilder: (context, i) {
+                          final obra = filteredObras[i];
+                          return GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ObraDetailPage(obra: obra),
+                              ),
+                            ),
+                            child: ObraCard(obra: obra),
+                          );
+                        },
+                      ),
+                  ],
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -562,15 +581,24 @@ class _ChipDropdown<T> extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
+          isExpanded: true, // <- Fix overflow
           hint: Text(
             label,
             style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant),
+            overflow: TextOverflow.ellipsis,
           ),
           icon: Icon(Icons.keyboard_arrow_down, color: cs.onSurfaceVariant),
           dropdownColor: cs.surfaceContainerHigh,
           style: tt.bodyLarge?.copyWith(color: cs.onSurface),
           items: items.map((e) {
-            return DropdownMenuItem<T>(value: e, child: Text(labeler(e)));
+            return DropdownMenuItem<T>(
+              value: e,
+              child: Text(
+                labeler(e),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            );
           }).toList(),
           onChanged: onChanged,
         ),
