@@ -30,13 +30,16 @@ class ProfileRemoteDataSource {
       throw Exception('No autenticado');
     }
 
-    final savedEmail = await _getSavedEmail();
-    if (savedEmail == null || savedEmail.isEmpty) {
-      throw Exception('No hay email de usuario guardado en la app');
+    final userId = await _tokenStorage.readUserId();
+    if (userId == null || userId.isEmpty) {
+      throw Exception('User ID no encontrado');
     }
 
+    final endpoint =
+        '${ApiConstants.baseUrl}${ApiConstants.usersEndpoint}$userId/';
+
     final response = await _dio.get(
-      '${ApiConstants.baseUrl}${ApiConstants.usersEndpoint}',
+      endpoint,
       options: Options(
         headers: {
           'Authorization': 'Token $token',
@@ -47,31 +50,11 @@ class ProfileRemoteDataSource {
 
     final data = response.data;
 
-    // Si el backend devuelve una LISTA de usuarios
-    if (data is List) {
-      final list = data.cast<Map<String, dynamic>>();
-
-      final userJson = list.firstWhere(
-        (u) {
-          final email = (u['email'] ?? '').toString().toLowerCase();
-          return email == savedEmail.toLowerCase();
-        },
-        orElse: () {
-          throw Exception(
-            'Usuario con email $savedEmail no encontrado en /auth/users/.',
-          );
-        },
-      );
-
-      return UserProfile.fromJson(userJson);
-    }
-
-    // Si el backend devuelve UN SOLO usuario (objeto)
     if (data is Map) {
       return UserProfile.fromJson(Map<String, dynamic>.from(data));
     }
 
-    throw Exception('Respuesta inesperada de /auth/users/');
+    throw Exception('Respuesta inesperada de /auth/users/$userId/');
   }
 
   // =================== UPDATE PROFILE ===================
@@ -137,9 +120,7 @@ class ProfileRemoteDataSource {
 
     await _dio.patch(
       endpoint,
-      data: {
-        'password': newPassword,
-      },
+      data: {'password': newPassword},
       options: Options(
         headers: {
           'Authorization': 'Token $token',

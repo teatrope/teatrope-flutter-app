@@ -10,8 +10,20 @@ import 'package:teatrope_flutter_app/features/profile/presentation/blocs/profile
 import 'package:teatrope_flutter_app/features/profile/presentation/blocs/profile_state.dart';
 import 'package:teatrope_flutter_app/features/profile/presentation/pages/settings_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Ensure profile is loaded when page is initialized
+    context.read<ProfileBloc>().add(const LoadProfile());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,20 +43,12 @@ class ProfilePage extends StatelessWidget {
 
         return Scaffold(
           extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            title: const Text('Profile'),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-          ),
           body: DarkBlurBackground(
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: state.status == Status.loading &&
-                        profile == null
-                    ? const Center(
-                        child: CircularProgressIndicator(),
-                      )
+                child: state.status == Status.loading && profile == null
+                    ? const Center(child: CircularProgressIndicator())
                     : ListView(
                         children: [
                           // User greeting
@@ -53,14 +57,20 @@ class ProfilePage extends StatelessWidget {
                               CircleAvatar(
                                 radius: 30,
                                 backgroundColor: cs.surfaceContainerHigh,
-                                child: profile?.avatarUrl != null && profile!.avatarUrl!.isNotEmpty
+                                child:
+                                    profile?.avatarUrl != null &&
+                                        profile!.avatarUrl!.isNotEmpty
                                     ? ClipOval(
                                         child: Image.network(
                                           profile.avatarUrl!,
                                           fit: BoxFit.cover,
                                         ),
                                       )
-                                    : Icon(Icons.person, color: cs.onSurfaceVariant, size: 30),
+                                    : Icon(
+                                        Icons.person,
+                                        color: cs.onSurfaceVariant,
+                                        size: 30,
+                                      ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -68,19 +78,12 @@ class ProfilePage extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Hi! User Welcome',
+                                      profile?.email ?? 'User',
                                       style: tt.titleMedium?.copyWith(
                                         color: cs.onSurface,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                    if (profile != null)
-                                      Text(
-                                        profile.email,
-                                        style: tt.bodySmall?.copyWith(
-                                          color: cs.onSurfaceVariant,
-                                        ),
-                                      ),
                                   ],
                                 ),
                               ),
@@ -97,45 +100,16 @@ class ProfilePage extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 32),
-                          
-                          // Account options
-                          _ProfileMenuItem(
-                            icon: Icons.confirmation_number,
-                            title: 'My tickets',
-                            onTap: () {},
-                          ),
-                          _ProfileMenuItem(
-                            icon: Icons.credit_card,
-                            title: 'My credit cards',
-                            onTap: () {},
-                          ),
-                          _ProfileMenuItem(
-                            icon: Icons.history,
-                            title: 'History',
-                            onTap: () {},
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Information links
-                          _ProfileMenuItem(
-                            icon: Icons.edit_outlined,
-                            title: 'About us',
-                            onTap: () {},
-                          ),
-                          _ProfileMenuItem(
-                            icon: Icons.info_outline,
-                            title: 'Terms & Conditions',
-                            onTap: () {},
-                          ),
-                          const SizedBox(height: 32),
-                          
+
                           // Logout button
                           Builder(
                             builder: (context) {
                               final cs = Theme.of(context).colorScheme;
                               return FilledButton.icon(
                                 onPressed: () {
-                                  context.read<ProfileBloc>().add(const LogoutRequested());
+                                  context.read<ProfileBloc>().add(
+                                    const LogoutRequested(),
+                                  );
                                 },
                                 icon: const Icon(Icons.logout),
                                 label: const Text('Logout'),
@@ -152,34 +126,6 @@ class ProfilePage extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _ProfileMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  const _ProfileMenuItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return ListTile(
-      leading: Icon(icon, color: cs.onSurfaceVariant),
-      title: Text(
-        title,
-        style: tt.bodyLarge?.copyWith(color: cs.onSurface),
-      ),
-      trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-      onTap: onTap,
     );
   }
 }
