@@ -226,11 +226,26 @@ class _ObraDetailPageState extends State<ObraDetailPage> {
                             const Text('📍', style: TextStyle(fontSize: 20)),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(
-                                '${obra.calle}${obra.calle.isNotEmpty && obra.distrito.isNotEmpty ? ', ' : ''}${obra.distrito}',
-                                style: tt.bodyLarge?.copyWith(
-                                  color: Colors.white,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${obra.calle}${obra.calle.isNotEmpty && obra.distrito.isNotEmpty ? ', ' : ''}${obra.distrito}',
+                                    style: tt.bodyLarge?.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  if (obra.teatroNombre.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      obra.teatroNombre,
+                                      style: tt.bodyMedium?.copyWith(
+                                        color: Colors.white70,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           ],

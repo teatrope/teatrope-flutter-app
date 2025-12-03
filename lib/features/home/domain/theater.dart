@@ -20,7 +20,11 @@ class Theater {
   });
 
   factory Theater.fromJson(Map<String, dynamic> json) {
-    String _s(dynamic v) => (v ?? '').toString();
+    String _s(dynamic v) {
+      if (v == null) return '';
+      return '$v';
+    }
+
     double _d(dynamic v) {
       if (v == null) return 0.0;
       if (v is num) return v.toDouble();

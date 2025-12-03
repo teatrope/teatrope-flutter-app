@@ -26,8 +26,10 @@ class ComingSoonPage extends StatelessWidget {
             children: [
               // Header
               Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Text(
@@ -40,8 +42,10 @@ class ComingSoonPage extends StatelessWidget {
                     ),
                     const Spacer(),
                     IconButton(
-                      icon: Icon(Icons.notifications_none,
-                          color: cs.onSurfaceVariant),
+                      icon: Icon(
+                        Icons.notifications_none,
+                        color: cs.onSurfaceVariant,
+                      ),
                       onPressed: () =>
                           Navigator.of(context).pushNamed('/notifications'),
                     ),
@@ -50,7 +54,6 @@ class ComingSoonPage extends StatelessWidget {
               ),
 
               // TODO: aquí luego puedes poner filtros (city/district/genre)
-
               Expanded(
                 child: BlocBuilder<ComingSoonBloc, ComingSoonState>(
                   builder: (context, state) {
@@ -65,16 +68,17 @@ class ComingSoonPage extends StatelessWidget {
                           children: [
                             Text(
                               state.message ?? 'Error al cargar',
-                              style: tt.bodyMedium
-                                  ?.copyWith(color: cs.onSurfaceVariant),
+                              style: tt.bodyMedium?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: () {
-                                context
-                                    .read<ComingSoonBloc>()
-                                    .add(const LoadComingSoon());
+                                context.read<ComingSoonBloc>().add(
+                                  const LoadComingSoon(),
+                                );
                               },
                               child: const Text('Reintentar'),
                             ),
@@ -87,8 +91,9 @@ class ComingSoonPage extends StatelessWidget {
                       return Center(
                         child: Text(
                           'No hay próximos estrenos',
-                          style: tt.bodyMedium
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: tt.bodyMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       );
                     }
@@ -98,13 +103,13 @@ class ComingSoonPage extends StatelessWidget {
                       child: GridView.builder(
                         physics: const BouncingScrollPhysics(),
                         gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          // más alto que ancho (tipo póster)
-                          childAspectRatio: 0.6,
-                        ),
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 16,
+                              crossAxisSpacing: 16,
+                              // más alto que ancho (tipo póster)
+                              childAspectRatio: 0.6,
+                            ),
                         itemCount: state.obras.length,
                         itemBuilder: (context, index) {
                           final obra = state.obras[index];
@@ -120,6 +125,7 @@ class ComingSoonPage extends StatelessWidget {
                             longitud: obra.longitud,
                             imageUrl: obra.imageUrl,
                             genero: obra.genero,
+                            teatroNombre: '',
                           );
 
                           return GestureDetector(
@@ -152,11 +158,16 @@ class ComingSoonPage extends StatelessWidget {
                                         left: 8,
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 4),
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(0.6),
-                                            borderRadius:
-                                            BorderRadius.circular(12),
+                                            color: Colors.black.withOpacity(
+                                              0.6,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           child: Text(
                                             'Release date | ${_formatDate(obra.fechaEstreno!)}',
@@ -209,9 +220,8 @@ class ComingSoonPage extends StatelessWidget {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
-

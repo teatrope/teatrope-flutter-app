@@ -14,7 +14,11 @@ class Funcion {
   });
 
   factory Funcion.fromJson(Map<String, dynamic> json) {
-    String _s(dynamic v) => (v ?? '').toString();
+    String _s(dynamic v) {
+      if (v == null) return '';
+      return '$v';
+    }
+
     int _i(dynamic v) => int.tryParse((v ?? '0').toString()) ?? 0;
 
     final obra = (json['obra'] is Map) ? (json['obra'] as Map) : const {};
