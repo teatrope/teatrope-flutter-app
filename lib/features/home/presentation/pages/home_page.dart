@@ -243,7 +243,7 @@ class _HomePageState extends State<HomePage> {
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                           childAspectRatio:
-                              0.7, // Adjust as needed to match card design
+                              0.7, // Match Theaters grid aspect ratio
                         ),
                     itemCount: obras.length,
                     itemBuilder: (context, i) {

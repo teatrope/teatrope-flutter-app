@@ -31,9 +31,15 @@ class ObraCard extends StatelessWidget {
                   ? Container(color: cs.surfaceContainer)
                   : Image.network(
                       obra.imageUrl,
-                      fit: BoxFit.cover, // recorta sin deformar para cualquier resolución
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: cs.surfaceContainer), // no imprime texto de error
+                      width: double
+                          .infinity, // Forzar que ocupe todo el ancho disponible
+                      fit: BoxFit
+                          .cover, // llena todo el espacio sin deformar (puede recortar)
+                      alignment: Alignment
+                          .topCenter, // prioriza la parte superior (rostros, etc)
+                      errorBuilder: (_, __, ___) => Container(
+                        color: cs.surfaceContainer,
+                      ), // no imprime texto de error
                     ),
             ),
           ),
