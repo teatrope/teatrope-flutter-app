@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:teatrope_flutter_app/features/home/domain/theater.dart';
+import 'package:teatrope_flutter_app/features/home/presentation/pages/theater_detail_page.dart';
 
 class TheaterCard extends StatelessWidget {
   const TheaterCard({super.key, required this.theater});
@@ -17,56 +18,66 @@ class TheaterCard extends StatelessWidget {
           ].where((e) => e.isNotEmpty).join(' • ')
         : theater.descripcion;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ocupa todo el espacio superior disponible -> no hay overflow
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TheaterDetailPage(theater: theater),
+          ),
+        );
+      },
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ocupa todo el espacio superior disponible -> no hay overflow
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+                child: theater.imageUrl.isEmpty
+                    ? Container(color: cs.surfaceContainer)
+                    : Image.network(
+                        theater.imageUrl,
+                        fit: BoxFit
+                            .cover, // recorta sin deformar para cualquier resolución
+                        errorBuilder: (_, __, ___) => Container(
+                          color: cs.surfaceContainer,
+                        ), // no imprime texto de error
+                      ),
               ),
-              child: theater.imageUrl.isEmpty
-                  ? Container(color: cs.surfaceContainer)
-                  : Image.network(
-                      theater.imageUrl,
-                      fit: BoxFit
-                          .cover, // recorta sin deformar para cualquier resolución
-                      errorBuilder: (_, __, ___) => Container(
-                        color: cs.surfaceContainer,
-                      ), // no imprime texto de error
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    theater.nombre,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: tt.titleMedium?.copyWith(
+                      color: cs.primaryFixedDim,
+                      fontWeight: FontWeight.w700,
                     ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  theater.nombre,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: tt.titleMedium?.copyWith(
-                    color: cs.primaryFixedDim,
-                    fontWeight: FontWeight.w700,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

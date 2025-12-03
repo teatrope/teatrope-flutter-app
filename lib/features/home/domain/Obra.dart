@@ -10,6 +10,7 @@ class Obra {
   final String genero;
 
   final String teatroNombre;
+  final String teatroId;
 
   const Obra({
     required this.id,
@@ -22,6 +23,7 @@ class Obra {
     required this.imageUrl,
     required this.genero,
     required this.teatroNombre,
+    required this.teatroId,
   });
 
   factory Obra.fromJson(Map<String, dynamic> json) {
@@ -51,6 +53,7 @@ class Obra {
       imageUrl: _s(json['image_url'] ?? teatro['image_url']),
       genero: _s(json['genero']),
       teatroNombre: _s(teatro['nombre']),
+      teatroId: _s(teatro['id']),
     );
   }
 
@@ -66,6 +69,7 @@ class Obra {
     'image_url': imageUrl,
     'genero': genero,
     'teatro_nombre': teatroNombre,
+    'teatro_id': teatroId,
   };
 
   factory Obra.fromMap(Map<String, dynamic> map) => Obra(
@@ -83,5 +87,6 @@ class Obra {
     imageUrl: map['image_url']?.toString() ?? '',
     genero: map['genero']?.toString() ?? '',
     teatroNombre: map['teatro_nombre']?.toString() ?? '',
+    teatroId: map['teatro_id']?.toString() ?? '',
   );
 }

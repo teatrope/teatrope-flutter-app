@@ -126,6 +126,7 @@ class ComingSoonPage extends StatelessWidget {
                             imageUrl: obra.imageUrl,
                             genero: obra.genero,
                             teatroNombre: '',
+                            teatroId: '',
                           );
 
                           return GestureDetector(
