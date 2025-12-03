@@ -24,7 +24,7 @@ class _HomePageState extends State<HomePage> {
   // Altura fija del carrusel; el ancho se maneja con AspectRatio
   static const double _carouselHeight = 300;
 
-  final _cities = const ['Lima', 'Arequipa', 'Cusco'];
+  final _cities = const ['Lima'];
 
   String _selectedCity = 'Lima';
   String _selectedDistrict = 'All';
@@ -123,12 +123,6 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 16),
 
                   // Promo
-                  _PromoCard(
-                    title: 'Know the promotions of',
-                    highlight: 'Tuesdays & Monday',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 16),
 
                   // Toggle Services/Theaters
                   _SegmentedTwo(
@@ -415,61 +409,6 @@ class _HomePageState extends State<HomePage> {
 }
 
 /// ---------- Helpers UI (respetan tu ColorScheme) ----------
-
-class _PromoCard extends StatelessWidget {
-  const _PromoCard({required this.title, required this.highlight, this.onTap});
-  final String title;
-  final String highlight;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                children: [
-                  TextSpan(text: '$title '),
-                  TextSpan(
-                    text: highlight,
-                    style: tt.titleMedium?.copyWith(
-                      color: cs.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Material(
-            color: cs.primary,
-            borderRadius: BorderRadius.circular(14),
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(14),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Icon(Icons.arrow_right_alt, color: cs.onPrimary),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _SegmentedTwo extends StatelessWidget {
   const _SegmentedTwo({
