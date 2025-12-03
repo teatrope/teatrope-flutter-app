@@ -108,7 +108,7 @@ class ComingSoonPage extends StatelessWidget {
                               mainAxisSpacing: 16,
                               crossAxisSpacing: 16,
                               // más alto que ancho (tipo póster)
-                              childAspectRatio: 0.6,
+                              childAspectRatio: 0.7,
                             ),
                         itemCount: state.obras.length,
                         itemBuilder: (context, index) {
@@ -141,47 +141,46 @@ class ComingSoonPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Póster + fecha de estreno
-                                Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(18),
-                                      child: AspectRatio(
-                                        aspectRatio: 3 / 4,
+                                Expanded(
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(18),
                                         child: Image.network(
                                           obra.imageUrl,
                                           fit: BoxFit.cover,
                                         ),
                                       ),
-                                    ),
-                                    if (obra.fechaEstreno != null)
-                                      Positioned(
-                                        top: 8,
-                                        left: 8,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(
-                                              0.6,
+                                      if (obra.fechaEstreno != null)
+                                        Positioned(
+                                          top: 8,
+                                          left: 8,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
                                             ),
-                                            borderRadius: BorderRadius.circular(
-                                              12,
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(
+                                                0.6,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
-                                          ),
-                                          child: Text(
-                                            'Release date | ${_formatDate(obra.fechaEstreno!)}',
-                                            style: tt.labelSmall?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w500,
+                                            child: Text(
+                                              'Release date | ${_formatDate(obra.fechaEstreno!)}',
+                                              style: tt.labelSmall?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 4),
                                 // Título
                                 Text(
                                   obra.nombre,

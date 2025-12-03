@@ -28,19 +28,22 @@ class ComingSoonObra {
 
   factory ComingSoonObra.fromJson(Map<String, dynamic> json) {
     // Ajusta aquí según cómo venga del backend
-    final rawFecha = json['fecha_estreno'] ?? json['fechaEstreno'] ?? json['fecha'];
+    final rawFecha =
+        json['fecha_estreno'] ?? json['fechaEstreno'] ?? json['fecha'];
 
     DateTime? parsedFecha;
     if (rawFecha is String && rawFecha.isNotEmpty) {
       parsedFecha = DateTime.tryParse(rawFecha);
     }
 
+    final teatro = json['teatro'] is Map ? json['teatro'] : <String, dynamic>{};
+
     return ComingSoonObra(
       id: json['id']?.toString() ?? '',
-      nombre: json['nombre'] ?? '',
-      descripcion: json['descripcion'] ?? '',
-      calle: json['calle'] ?? '',
-      distrito: json['distrito'] ?? '',
+      nombre: json['titulo'] ?? json['nombre'] ?? '',
+      descripcion: json['sinopsis'] ?? json['descripcion'] ?? '',
+      calle: json['calle'] ?? teatro['calle'] ?? '',
+      distrito: json['distrito'] ?? teatro['distrito'] ?? '',
       latitud: (json['latitud'] as num?)?.toDouble() ?? 0.0,
       longitud: (json['longitud'] as num?)?.toDouble() ?? 0.0,
       imageUrl: json['image_url'] ?? json['imageUrl'] ?? '',
