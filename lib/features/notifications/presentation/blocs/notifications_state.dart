@@ -1,29 +1,28 @@
 import 'package:equatable/equatable.dart';
 import 'package:teatrope_flutter_app/core/enums/status.dart';
-import 'package:teatrope_flutter_app/features/notifications/domain/notifications_preferences.dart';
+import 'package:teatrope_flutter_app/features/notifications/domain/notification_model.dart';
 
 class NotificationsState extends Equatable {
   final Status status;
-  final NotificationPreferences? prefs;
+  final List<NotificationModel> notifications;
   final String? error;
 
   const NotificationsState({
     this.status = Status.initial,
-    this.prefs,
+    this.notifications = const [],
     this.error,
   });
 
   NotificationsState copyWith({
     Status? status,
-    NotificationPreferences? prefs,
+    List<NotificationModel>? notifications,
     String? error,
-  }) =>
-      NotificationsState(
-        status: status ?? this.status,
-        prefs: prefs ?? this.prefs,
-        error: error,
-      );
+  }) => NotificationsState(
+    status: status ?? this.status,
+    notifications: notifications ?? this.notifications,
+    error: error,
+  );
 
   @override
-  List<Object?> get props => [status, prefs, error];
+  List<Object?> get props => [status, notifications, error];
 }

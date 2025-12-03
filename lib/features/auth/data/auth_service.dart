@@ -24,18 +24,21 @@ class AuthService {
   final TokenStorage _storage;
 
   AuthService({http.Client? client, TokenStorage? storage})
-      : _client = client ?? http.Client(),
-        _storage = storage ?? TokenStorage();
+    : _client = client ?? http.Client(),
+      _storage = storage ?? TokenStorage();
 
   Future<User> signIn(String email, String password) async {
-    final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.signinEndpoint}');
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.signinEndpoint}',
+    );
     final resp = await _client.post(
       uri,
       headers: {HttpHeaders.contentTypeHeader: 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
     );
 
-    if (resp.statusCode == HttpStatus.ok || resp.statusCode == HttpStatus.created) {
+    if (resp.statusCode == HttpStatus.ok ||
+        resp.statusCode == HttpStatus.created) {
       final json = jsonDecode(resp.body) as Map<String, dynamic>;
       final token = (json['token'] ?? json['auth_token'] ?? '').toString();
       if (token.isEmpty) {
@@ -45,14 +48,24 @@ class AuthService {
 
       // Si tu endpoint devuelve user dentro:
       final userJson = (json['user'] ?? {}) as Map<String, dynamic>;
-      return User.fromJson(userJson);
+      final user = User.fromJson(userJson);
+
+      if (user.id.isNotEmpty) {
+        await _storage.saveUserId(user.id);
+      }
+
+      return user;
     }
 
-    throw Exception('Login falló: ${resp.statusCode} ${resp.reasonPhrase}\n${resp.body}');
+    throw Exception(
+      'Login falló: ${resp.statusCode} ${resp.reasonPhrase}\n${resp.body}',
+    );
   }
 
   Future<void> signUp(String email, String password) async {
-    final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.signupEndpoint}');
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.signupEndpoint}',
+    );
     final resp = await _client.post(
       uri,
       headers: {HttpHeaders.contentTypeHeader: 'application/json'},
@@ -63,7 +76,9 @@ class AuthService {
         resp.statusCode == HttpStatus.created) {
       return;
     }
-    throw Exception('Registro falló: ${resp.statusCode} ${resp.reasonPhrase}\n${resp.body}');
+    throw Exception(
+      'Registro falló: ${resp.statusCode} ${resp.reasonPhrase}\n${resp.body}',
+    );
   }
 
   Future<void> signOut() async => _storage.clear();
@@ -73,7 +88,9 @@ class AuthService {
     if (token == null || token.isEmpty) throw Exception('No autenticado.');
     return {
       HttpHeaders.acceptHeader: 'application/json',
-      HttpHeaders.authorizationHeader: bearer ? 'Bearer $token' : 'Token $token',
+      HttpHeaders.authorizationHeader: bearer
+          ? 'Bearer $token'
+          : 'Token $token',
     };
   }
 }

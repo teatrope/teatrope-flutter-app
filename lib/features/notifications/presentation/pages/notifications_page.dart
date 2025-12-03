@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:teatrope_flutter_app/core/enums/status.dart';
 import 'package:teatrope_flutter_app/core/ui/theme.dart';
-import 'package:teatrope_flutter_app/features/notifications/domain/notifications_preferences.dart';
+import 'package:teatrope_flutter_app/features/notifications/domain/notification_model.dart';
 import 'package:teatrope_flutter_app/features/notifications/presentation/blocs/notifications_bloc.dart';
 import 'package:teatrope_flutter_app/features/notifications/presentation/blocs/notifications_event.dart';
 import 'package:teatrope_flutter_app/features/notifications/presentation/blocs/notifications_state.dart';
-import 'package:teatrope_flutter_app/features/notifications/widgets/notification_card.dart';
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
@@ -14,7 +13,9 @@ class NotificationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(gradient: MaterialTheme.darkLinearGradient),
+      decoration: const BoxDecoration(
+        gradient: MaterialTheme.darkLinearGradient,
+      ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -23,8 +24,9 @@ class NotificationsPage extends StatelessWidget {
           title: const Text('Notifications'),
           actions: [
             TextButton(
-              onPressed: () => ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text('All caught up!'))),
+              onPressed: () => ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('All caught up!'))),
               child: const Text('Clear all'),
             ),
           ],
@@ -43,10 +45,30 @@ class NotificationsPage extends StatelessWidget {
                   ),
                 );
               case Status.success:
-                final p = state.prefs!;
-                return _buildList(context, p);
+                final notifications = state.notifications;
+                if (notifications.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No tienes notificaciones',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(color: Colors.white70),
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: notifications.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final notification = notifications[index];
+                    return _NotificationItem(notification: notification);
+                  },
+                );
               default:
-                context.read<NotificationsBloc>().add(const LoadNotifications());
+                context.read<NotificationsBloc>().add(
+                  const LoadNotifications(),
+                );
                 return const SizedBox.shrink();
             }
           },
@@ -54,116 +76,89 @@ class NotificationsPage extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildList(BuildContext context, NotificationPreferences p) {
-    final items = <Widget>[
-      // Mostramos cada campo tal cual, sin concatenar textos
-      NotificationCard(
-        emoji: '🆔',
-        title: 'usuario_id',
-        subtitle: p.usuarioId,
-      ),
-      _GenresCard(generos: p.generos), // chips sin concatenar
-      NotificationCard(
-        emoji: '🛣️',
-        title: 'calle_preferida',
-        subtitle: p.callePreferida,
-      ),
-      NotificationCard(
-        emoji: '🏙️',
-        title: 'distrito_preferida',
-        subtitle: p.distritoPreferida,
-      ),
-      NotificationCard(
-        emoji: '🧭',
-        title: 'latitud_preferida',
-        subtitle: p.latitudPreferida.toString(),
-      ),
-      NotificationCard(
-        emoji: '🧭',
-        title: 'longitud_preferida',
-        subtitle: p.longitudPreferida.toString(),
-      ),
-      NotificationCard(
-        emoji: '🔔',
-        title: 'frecuencia_notif',
-        subtitle: p.frecuenciaNotif,
-      ),
-    ];
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (_, i) => items[i],
-    );
-  }
 }
 
-/// Card especial para mostrar generos_json como chips individuales (sin join)
-class _GenresCard extends StatelessWidget {
-  const _GenresCard({required this.generos});
-  final List<String> generos;
+class _NotificationItem extends StatelessWidget {
+  const _NotificationItem({required this.notification});
+
+  final NotificationModel notification;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasGenres = generos.isNotEmpty;
+    final cs = theme.colorScheme;
 
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF2B2B38).withOpacity(0.65),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('🎭', style: TextStyle(fontSize: 22)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('generos_json',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFFFFFFFF).withOpacity(0.9),
-                      fontWeight: FontWeight.w600,
-                    )),
-                const SizedBox(height: 8),
-                if (!hasGenres)
-                  Text('—', style: theme.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFFFFFFFF).withOpacity(0.72),
-                  )),
-                if (hasGenres)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: generos.map((g) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2B2B38), // sólido para chip
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.12),
-                          ),
-                        ),
-                        child: Text(
-                          g,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-              ],
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: cs.primary.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.notifications_active_outlined,
+                  color: cs.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      notification.tituloMensaje,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDate(notification.timestamp),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 12),
+          Text(
+            notification.cuerpoMensaje,
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
+          ),
+          if (notification.enlaceMensaje.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  // TODO: Implement navigation or url launch
+                },
+                child: Text('Ver más', style: TextStyle(color: cs.primary)),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
