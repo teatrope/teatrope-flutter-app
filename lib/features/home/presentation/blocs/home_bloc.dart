@@ -11,12 +11,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final ObraService service;
   final TokenStorage _tokenStorage;
 
-  HomeBloc({
-    required this.service,
-    TokenStorage? tokenStorage,
-  })  : _tokenStorage = tokenStorage ?? TokenStorage(),
-        super(const HomeState()) {
+  HomeBloc({required this.service, TokenStorage? tokenStorage})
+    : _tokenStorage = tokenStorage ?? TokenStorage(),
+      super(const HomeState()) {
     on<GetObrasByGenre>(_getObrasByGenre);
+    on<GetTheaters>(_getTheaters);
   }
 
   FutureOr<void> _getObrasByGenre(
@@ -36,13 +35,35 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       // Si es "all" o "TODOS", no pasar género para traer todas las obras
       final genero = event.genre == GenresType.all ? null : event.genre.label;
-      
+
       final obras = await service.getObras(
         genero: genero, // null para todas, o el género específico
         token: token,
       );
 
       emit(state.copyWith(status: Status.success, obras: obras));
+    } catch (e) {
+      emit(state.copyWith(status: Status.failure, message: e.toString()));
+    }
+  }
+
+  FutureOr<void> _getTheaters(
+    GetTheaters event,
+    Emitter<HomeState> emit,
+  ) async {
+    if (state.theaters.isNotEmpty) return;
+
+    emit(state.copyWith(status: Status.loading));
+
+    try {
+      final token = await _tokenStorage.read();
+      if (token == null || token.isEmpty) {
+        throw Exception('No autenticado. Inicia sesión.');
+      }
+
+      final theaters = await service.getTheaters(token: token);
+
+      emit(state.copyWith(status: Status.success, theaters: theaters));
     } catch (e) {
       emit(state.copyWith(status: Status.failure, message: e.toString()));
     }

@@ -5,11 +5,13 @@ import 'package:teatrope_flutter_app/core/enums/status.dart';
 import 'package:teatrope_flutter_app/core/ui/theme.dart'; // DarkBlurBackground
 import 'package:teatrope_flutter_app/core/token/token_storage.dart';
 import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
+import 'package:teatrope_flutter_app/features/home/domain/theater.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_bloc.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_event.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/blocs/home_state.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/pages/obra_detail_page.dart';
 import 'package:teatrope_flutter_app/features/home/widgets/obra_card.dart';
+import 'package:teatrope_flutter_app/features/home/widgets/theater_card.dart';
 import 'package:teatrope_flutter_app/features/search/data/search_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -38,7 +40,8 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: DarkBlurBackground( // mismo fondo usado en SignIn/SignUp
+      body: DarkBlurBackground(
+        // mismo fondo usado en SignIn/SignUp
         child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -56,10 +59,11 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const Spacer(),
                   _roundedIcon(
-                  context,
-                  Icons.notifications_none,
-                  onTap: () => Navigator.of(context).pushNamed('/notifications'),
-                ),
+                    context,
+                    Icons.notifications_none,
+                    onTap: () =>
+                        Navigator.of(context).pushNamed('/notifications'),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -72,7 +76,8 @@ class _HomePageState extends State<HomePage> {
                       label: 'Choose city',
                       value: _selectedCity,
                       items: _cities,
-                      onChanged: (v) => setState(() => _selectedCity = v ?? _selectedCity),
+                      onChanged: (v) =>
+                          setState(() => _selectedCity = v ?? _selectedCity),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -103,10 +108,18 @@ class _HomePageState extends State<HomePage> {
                 onChanged: (v) {
                   setState(() => _isTheaters = v);
                   // When switching, reload with current genre
-                  if (_selectedGenre != null) {
-                    context.read<HomeBloc>().add(GetObrasByGenre(genre: _selectedGenre!));
+                  if (_isTheaters) {
+                    context.read<HomeBloc>().add(const GetTheaters());
                   } else {
-                    context.read<HomeBloc>().add(const GetObrasByGenre(genre: GenresType.all));
+                    if (_selectedGenre != null) {
+                      context.read<HomeBloc>().add(
+                        GetObrasByGenre(genre: _selectedGenre!),
+                      );
+                    } else {
+                      context.read<HomeBloc>().add(
+                        const GetObrasByGenre(genre: GenresType.all),
+                      );
+                    }
                   }
                 },
               ),
@@ -120,7 +133,9 @@ class _HomePageState extends State<HomePage> {
                       label: 'District',
                       value: _selectedDistrict,
                       items: _districts,
-                      onChanged: (v) => setState(() => _selectedDistrict = v ?? _selectedDistrict),
+                      onChanged: (v) => setState(
+                        () => _selectedDistrict = v ?? _selectedDistrict,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -133,7 +148,9 @@ class _HomePageState extends State<HomePage> {
                       onChanged: (g) {
                         setState(() => _selectedGenre = g);
                         if (g != null) {
-                          context.read<HomeBloc>().add(GetObrasByGenre(genre: g));
+                          context.read<HomeBloc>().add(
+                            GetObrasByGenre(genre: g),
+                          );
                         }
                       },
                     ),
@@ -142,10 +159,14 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 16),
 
-              BlocSelector<HomeBloc, HomeState, (Status, List<Obra>, String?)>(
-                selector: (s) => (s.status, s.obras, s.message),
+              BlocSelector<
+                HomeBloc,
+                HomeState,
+                (Status, List<Obra>, List<Theater>, String?)
+              >(
+                selector: (s) => (s.status, s.obras, s.theaters, s.message),
                 builder: (context, tuple) {
-                  final (status, obras, message) = tuple;
+                  final (status, obras, theaters, message) = tuple;
 
                   if (status == Status.loading) {
                     return SizedBox(
@@ -159,18 +180,55 @@ class _HomePageState extends State<HomePage> {
                       child: Center(
                         child: Text(
                           message ?? 'Error',
-                          style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                          style: tt.bodyMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     );
                   }
+
+                  if (_isTheaters) {
+                    if (theaters.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: Text(
+                            'No hay teatros para mostrar',
+                            style: tt.bodyMedium?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio:
+                                0.7, // Adjust as needed to match card design
+                          ),
+                      itemCount: theaters.length,
+                      itemBuilder: (context, i) {
+                        return TheaterCard(theater: theaters[i]);
+                      },
+                    );
+                  }
+
                   if (obras.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
                         child: Text(
                           'No hay obras para mostrar',
-                          style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                          style: tt.bodyMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     );
@@ -186,7 +244,7 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, i) {
                         final obra = obras[i];
                         return AspectRatio(
-                          aspectRatio: 2 / 3, 
+                          aspectRatio: 2 / 3,
                           child: GestureDetector(
                             onTap: () => Navigator.push(
                               context,
@@ -209,7 +267,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _roundedIcon(BuildContext context, IconData icon, {VoidCallback? onTap}) {
+  Widget _roundedIcon(
+    BuildContext context,
+    IconData icon, {
+    VoidCallback? onTap,
+  }) {
     final cs = Theme.of(context).colorScheme;
     return Material(
       color: cs.surfaceContainerHigh,
@@ -290,10 +352,21 @@ class _HomePageState extends State<HomePage> {
                       final obra = searchResults[index];
                       return ListTile(
                         leading: obra.imageUrl.isNotEmpty
-                            ? Image.network(obra.imageUrl, width: 50, height: 50, fit: BoxFit.cover)
+                            ? Image.network(
+                                obra.imageUrl,
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                              )
                             : const Icon(Icons.image),
-                        title: Text(obra.nombre, style: TextStyle(color: cs.onSurface)),
-                        subtitle: Text(obra.genero, style: TextStyle(color: cs.onSurfaceVariant)),
+                        title: Text(
+                          obra.nombre,
+                          style: TextStyle(color: cs.onSurface),
+                        ),
+                        subtitle: Text(
+                          obra.genero,
+                          style: TextStyle(color: cs.onSurfaceVariant),
+                        ),
                         onTap: () {
                           Navigator.of(dialogContext).pop();
                           Navigator.push(
@@ -488,15 +561,15 @@ class _ChipDropdown<T> extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
-          hint: Text(label, style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant)),
+          hint: Text(
+            label,
+            style: tt.labelLarge?.copyWith(color: cs.onSurfaceVariant),
+          ),
           icon: Icon(Icons.keyboard_arrow_down, color: cs.onSurfaceVariant),
           dropdownColor: cs.surfaceContainerHigh,
           style: tt.bodyLarge?.copyWith(color: cs.onSurface),
           items: items.map((e) {
-            return DropdownMenuItem<T>(
-              value: e,
-              child: Text(labeler(e)),
-            );
+            return DropdownMenuItem<T>(value: e, child: Text(labeler(e)));
           }).toList(),
           onChanged: onChanged,
         ),

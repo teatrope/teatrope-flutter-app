@@ -9,3 +9,7 @@ class GetObrasByGenre extends HomeEvent {
   final GenresType genre;
   const GetObrasByGenre({required this.genre});
 }
+
+class GetTheaters extends HomeEvent {
+  const GetTheaters();
+}
