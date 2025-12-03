@@ -234,29 +234,30 @@ class _HomePageState extends State<HomePage> {
                     );
                   }
 
-                  return SizedBox(
-                    height: _carouselHeight,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: obras.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, i) {
-                        final obra = obras[i];
-                        return AspectRatio(
-                          aspectRatio: 2 / 3,
-                          child: GestureDetector(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ObraDetailPage(obra: obra),
-                              ),
-                            ),
-                            child: ObraCard(obra: obra),
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio:
+                              0.7, // Adjust as needed to match card design
+                        ),
+                    itemCount: obras.length,
+                    itemBuilder: (context, i) {
+                      final obra = obras[i];
+                      return GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ObraDetailPage(obra: obra),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                        child: ObraCard(obra: obra),
+                      );
+                    },
                   );
                 },
               ),
