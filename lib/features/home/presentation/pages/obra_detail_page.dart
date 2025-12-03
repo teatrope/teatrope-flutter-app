@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:teatrope_flutter_app/features/favorites/presentation/blocs/favorite_bloc.dart';
 import 'package:teatrope_flutter_app/features/favorites/presentation/blocs/favorite_event.dart';
 import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
@@ -7,6 +9,7 @@ import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
 import 'package:teatrope_flutter_app/core/token/token_storage.dart';
 import 'package:teatrope_flutter_app/features/home/data/obra_service.dart';
 import 'package:teatrope_flutter_app/features/home/domain/person.dart';
+import 'package:teatrope_flutter_app/features/home/domain/funcion.dart';
 
 class ObraDetailPage extends StatefulWidget {
   final Obra obra;
@@ -18,41 +21,50 @@ class ObraDetailPage extends StatefulWidget {
 
 class _ObraDetailPageState extends State<ObraDetailPage> {
   List<Person> _cast = [];
-  bool _loadingCast = true;
+  List<Funcion> _funciones = [];
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchCast();
+    _fetchData();
   }
 
-  Future<void> _fetchCast() async {
+  Future<void> _fetchData() async {
     try {
+      await initializeDateFormatting('es');
       final token = await TokenStorage().read();
       if (token != null) {
-        final allPersonas = await ObraService().getPersonas(token: token);
+        final service = ObraService();
+        final allPersonas = await service.getPersonas(token: token);
+        final allFunciones = await service.getFunciones(token: token);
+
         // Filtrar por obraId
-        final filtered = allPersonas
+        final castFiltered = allPersonas
             .where((p) => p.obraId == widget.obra.id)
             .toList();
+        final funcionesFiltered = allFunciones
+            .where((f) => f.obraId == widget.obra.id)
+            .toList();
+
         if (mounted) {
           setState(() {
-            _cast = filtered;
-            _loadingCast = false;
+            _cast = castFiltered;
+            _funciones = funcionesFiltered;
+            _loading = false;
           });
         }
       }
     } catch (e) {
-      debugPrint('Error fetching cast: $e');
+      debugPrint('Error fetching data: $e');
       if (mounted) {
-        setState(() => _loadingCast = false);
+        setState(() => _loading = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final obra = widget.obra;
 
@@ -134,111 +146,184 @@ class _ObraDetailPageState extends State<ObraDetailPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Reparto (Cast)
-                    if (_loadingCast)
+                    if (_loading)
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16),
                         child: Center(child: CircularProgressIndicator()),
                       )
-                    else if (_cast.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'Reparto',
-                          style: tt.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                    else ...[
+                      // Reparto (Cast)
+                      if (_cast.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'Reparto',
+                            style: tt.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 110, // Altura para foto + nombre + rol
+                          child: ListView.separated(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _cast.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 16),
+                            itemBuilder: (context, index) {
+                              final person = _cast[index];
+                              return Column(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 30,
+                                    backgroundColor: Colors.grey[800],
+                                    backgroundImage: person.imageUrl.isNotEmpty
+                                        ? NetworkImage(person.imageUrl)
+                                        : null,
+                                    child: person.imageUrl.isEmpty
+                                        ? const Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    person.nombreCompleto,
+                                    style: tt.bodySmall?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    person.rol,
+                                    style: tt.labelSmall?.copyWith(
+                                      color: Colors.white70,
+                                      fontSize: 10,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Lugar / Horarios (simple)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('📍', style: TextStyle(fontSize: 20)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${obra.calle}${obra.calle.isNotEmpty && obra.distrito.isNotEmpty ? ', ' : ''}${obra.distrito}',
+                                style: tt.bodyLarge?.copyWith(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 110, // Altura para foto + nombre + rol
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _cast.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 16),
-                          itemBuilder: (context, index) {
-                            final person = _cast[index];
-                            return Column(
-                              children: [
-                                CircleAvatar(
-                                  radius: 30,
-                                  backgroundColor: Colors.grey[800],
-                                  backgroundImage: person.imageUrl.isNotEmpty
-                                      ? NetworkImage(person.imageUrl)
-                                      : null,
-                                  child: person.imageUrl.isEmpty
-                                      ? const Icon(
-                                          Icons.person,
-                                          color: Colors.white,
-                                        )
-                                      : null,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  person.nombreCompleto,
-                                  style: tt.bodySmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  person.rol,
-                                  style: tt.labelSmall?.copyWith(
-                                    color: Colors.white70,
-                                    fontSize: 10,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            );
-                          },
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            const Text('🧭', style: TextStyle(fontSize: 20)),
+                            const SizedBox(width: 8),
+                            Text(
+                              '(${obra.latitud.toStringAsFixed(4)}, ${obra.longitud.toStringAsFixed(4)})',
+                              style: tt.bodyMedium?.copyWith(
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 24),
-                    ],
 
-                    // Lugar / Horarios (simple)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('📍', style: TextStyle(fontSize: 20)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '${obra.calle}${obra.calle.isNotEmpty && obra.distrito.isNotEmpty ? ', ' : ''}${obra.distrito}',
-                              style: tt.bodyLarge?.copyWith(
-                                color: Colors.white,
+                      // Funciones
+                      if (_funciones.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'Funciones',
+                            style: tt.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _funciones.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final funcion = _funciones[index];
+                            final dateStr = DateFormat(
+                              'EEE d MMM, HH:mm',
+                              'es',
+                            ).format(funcion.fecha);
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2B2B38),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          const Text('🧭', style: TextStyle(fontSize: 20)),
-                          const SizedBox(width: 8),
-                          Text(
-                            '(${obra.latitud.toStringAsFixed(4)}, ${obra.longitud.toStringAsFixed(4)})',
-                            style: tt.bodyMedium?.copyWith(
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_today,
+                                    color: Colors.white70,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          dateStr,
+                                          style: tt.bodyMedium?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${funcion.duracionMinutos} min • ${funcion.disponibilidadAsientos} asientos',
+                                          style: tt.bodySmall?.copyWith(
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ],
                   ],
                 ),
               ),

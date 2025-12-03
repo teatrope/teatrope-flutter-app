@@ -7,6 +7,7 @@ import 'package:teatrope_flutter_app/core/constants/api_constants.dart';
 import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
 import 'package:teatrope_flutter_app/features/home/domain/theater.dart';
 import 'package:teatrope_flutter_app/features/home/domain/person.dart';
+import 'package:teatrope_flutter_app/features/home/domain/funcion.dart';
 
 class ObraService {
   final http.Client _client;
@@ -115,6 +116,36 @@ class ObraService {
 
     return raw
         .map((e) => Person.fromJson((e as Map).cast<String, dynamic>()))
+        .toList();
+  }
+
+  Future<List<Funcion>> getFunciones({required String token}) async {
+    final uri = Uri.parse('${ApiConstants.baseUrl}content/funciones/');
+
+    final headers = <String, String>{
+      HttpHeaders.acceptHeader: 'application/json',
+      HttpHeaders.authorizationHeader: 'Token $token',
+    };
+
+    final resp = await _client.get(uri, headers: headers);
+
+    if (resp.statusCode != HttpStatus.ok) {
+      throw Exception(
+        'HTTP ${resp.statusCode}: ${resp.reasonPhrase}\n${resp.body}',
+      );
+    }
+
+    final decoded = jsonDecode(resp.body);
+    final List raw = decoded is List
+        ? decoded
+        : (decoded is Map && decoded['results'] is List)
+        ? decoded['results'] as List
+        : (decoded is Map && decoded['data'] is List)
+        ? decoded['data'] as List
+        : <dynamic>[];
+
+    return raw
+        .map((e) => Funcion.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
   }
 }
