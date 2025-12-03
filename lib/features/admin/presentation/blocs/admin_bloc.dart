@@ -14,6 +14,9 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<LoadTheaters>(_onLoadTheaters);
     on<SelectTheater>(_onSelectTheater);
     on<LoadTheaterObras>(_onLoadTheaterObras);
+    on<EditObra>(_onEditObra);
+    on<UpdateObra>(_onUpdateObra);
+    on<ClearEditingObra>(_onClearEditingObra);
   }
 
   Future<void> _onLoadTheaters(
@@ -76,5 +79,68 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     } catch (e) {
       emit(state.copyWith(status: Status.failure, errorMessage: e.toString()));
     }
+  }
+
+  Future<void> _onEditObra(EditObra event, Emitter<AdminState> emit) async {
+    emit(state.copyWith(updateStatus: Status.loading));
+    try {
+      final token = await _tokenStorage.read();
+      if (token == null) throw Exception('No token found');
+
+      final obra = await obraService.getObraById(
+        id: event.obraId,
+        token: token,
+      );
+      emit(
+        state.copyWith(
+          updateStatus: Status.initial, // Reset status for UI
+          editingObra: obra,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          updateStatus: Status.failure,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onUpdateObra(UpdateObra event, Emitter<AdminState> emit) async {
+    emit(state.copyWith(updateStatus: Status.loading));
+    try {
+      final token = await _tokenStorage.read();
+      if (token == null) throw Exception('No token found');
+
+      await obraService.updateObra(
+        id: event.obraId,
+        data: event.data,
+        token: token,
+      );
+
+      emit(
+        state.copyWith(
+          updateStatus: Status.success,
+          clearEditingObra: true, // Clear editing obra on success
+        ),
+      );
+
+      // Refresh list
+      if (state.selectedTheater != null) {
+        add(LoadTheaterObras(state.selectedTheater!.id));
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          updateStatus: Status.failure,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  void _onClearEditingObra(ClearEditingObra event, Emitter<AdminState> emit) {
+    emit(state.copyWith(clearEditingObra: true));
   }
 }

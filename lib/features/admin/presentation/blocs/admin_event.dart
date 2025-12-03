@@ -29,3 +29,26 @@ class LoadTheaterObras extends AdminEvent {
   @override
   List<Object?> get props => [theaterId];
 }
+
+class EditObra extends AdminEvent {
+  final String obraId;
+
+  const EditObra(this.obraId);
+
+  @override
+  List<Object?> get props => [obraId];
+}
+
+class UpdateObra extends AdminEvent {
+  final String obraId;
+  final Map<String, dynamic> data;
+
+  const UpdateObra(this.obraId, this.data);
+
+  @override
+  List<Object?> get props => [obraId, data];
+}
+
+class ClearEditingObra extends AdminEvent {
+  const ClearEditingObra();
+}

@@ -148,4 +148,50 @@ class ObraService {
         .map((e) => Funcion.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
   }
+
+  Future<Obra> getObraById({required String id, required String token}) async {
+    final uri = Uri.parse('${ApiConstants.baseUrl}content/obras/$id/');
+
+    final headers = <String, String>{
+      HttpHeaders.acceptHeader: 'application/json',
+      HttpHeaders.authorizationHeader: 'Token $token',
+    };
+
+    final resp = await _client.get(uri, headers: headers);
+
+    if (resp.statusCode != HttpStatus.ok) {
+      throw Exception(
+        'HTTP ${resp.statusCode}: ${resp.reasonPhrase}\n${resp.body}',
+      );
+    }
+
+    final decoded = jsonDecode(resp.body);
+    return Obra.fromJson((decoded as Map).cast<String, dynamic>());
+  }
+
+  Future<void> updateObra({
+    required String id,
+    required Map<String, dynamic> data,
+    required String token,
+  }) async {
+    final uri = Uri.parse('${ApiConstants.baseUrl}content/obras/$id/');
+
+    final headers = <String, String>{
+      HttpHeaders.acceptHeader: 'application/json',
+      HttpHeaders.contentTypeHeader: 'application/json',
+      HttpHeaders.authorizationHeader: 'Token $token',
+    };
+
+    final resp = await _client.patch(
+      uri,
+      headers: headers,
+      body: jsonEncode(data),
+    );
+
+    if (resp.statusCode != HttpStatus.ok) {
+      throw Exception(
+        'HTTP ${resp.statusCode}: ${resp.reasonPhrase}\n${resp.body}',
+      );
+    }
+  }
 }

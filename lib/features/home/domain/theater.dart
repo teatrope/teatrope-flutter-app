@@ -1,4 +1,6 @@
-class Theater {
+import 'package:equatable/equatable.dart';
+
+class Theater extends Equatable {
   final String id;
   final String nombre;
   final String descripcion;
@@ -42,4 +44,16 @@ class Theater {
       imageUrl: _s(json['image_url']),
     );
   }
+
+  @override
+  List<Object?> get props => [
+    id,
+    nombre,
+    descripcion,
+    calle,
+    distrito,
+    latitud,
+    longitud,
+    imageUrl,
+  ];
 }

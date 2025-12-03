@@ -11,6 +11,9 @@ class Obra {
 
   final String teatroNombre;
   final String teatroId;
+  final String directorNombre;
+  final String directorRol;
+  final String buyUrl;
 
   const Obra({
     required this.id,
@@ -24,6 +27,9 @@ class Obra {
     required this.genero,
     required this.teatroNombre,
     required this.teatroId,
+    this.directorNombre = '',
+    this.directorRol = '',
+    this.buyUrl = '',
   });
 
   factory Obra.fromJson(Map<String, dynamic> json) {
@@ -54,6 +60,9 @@ class Obra {
       genero: _s(json['genero']),
       teatroNombre: _s(teatro['nombre']),
       teatroId: _s(teatro['id']),
+      directorNombre: _s(json['director_nombre']),
+      directorRol: _s(json['director_rol']),
+      buyUrl: _s(json['buy_url']),
     );
   }
 
@@ -70,6 +79,9 @@ class Obra {
     'genero': genero,
     'teatro_nombre': teatroNombre,
     'teatro_id': teatroId,
+    'director_nombre': directorNombre,
+    'director_rol': directorRol,
+    'buy_url': buyUrl,
   };
 
   factory Obra.fromMap(Map<String, dynamic> map) => Obra(
@@ -88,5 +100,8 @@ class Obra {
     genero: map['genero']?.toString() ?? '',
     teatroNombre: map['teatro_nombre']?.toString() ?? '',
     teatroId: map['teatro_id']?.toString() ?? '',
+    directorNombre: map['director_nombre']?.toString() ?? '',
+    directorRol: map['director_rol']?.toString() ?? '',
+    buyUrl: map['buy_url']?.toString() ?? '',
   );
 }

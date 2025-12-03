@@ -18,11 +18,6 @@ class ProfileRemoteDataSource {
   static const _kUserEmailKey = 'user_email';
   static const _kUserPasswordKey = 'user_password';
 
-  Future<String?> _getSavedEmail() async {
-    final sp = await SharedPreferences.getInstance();
-    return sp.getString(_kUserEmailKey);
-  }
-
   // =================== GET PROFILE ===================
   Future<UserProfile> fetchProfile() async {
     final token = await _tokenStorage.read();
