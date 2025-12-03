@@ -4,14 +4,57 @@ import 'package:teatrope_flutter_app/features/favorites/presentation/blocs/favor
 import 'package:teatrope_flutter_app/features/favorites/presentation/blocs/favorite_event.dart';
 import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
 
-class ObraDetailPage extends StatelessWidget {
+import 'package:teatrope_flutter_app/core/token/token_storage.dart';
+import 'package:teatrope_flutter_app/features/home/data/obra_service.dart';
+import 'package:teatrope_flutter_app/features/home/domain/person.dart';
+
+class ObraDetailPage extends StatefulWidget {
   final Obra obra;
   const ObraDetailPage({super.key, required this.obra});
+
+  @override
+  State<ObraDetailPage> createState() => _ObraDetailPageState();
+}
+
+class _ObraDetailPageState extends State<ObraDetailPage> {
+  List<Person> _cast = [];
+  bool _loadingCast = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCast();
+  }
+
+  Future<void> _fetchCast() async {
+    try {
+      final token = await TokenStorage().read();
+      if (token != null) {
+        final allPersonas = await ObraService().getPersonas(token: token);
+        // Filtrar por obraId
+        final filtered = allPersonas
+            .where((p) => p.obraId == widget.obra.id)
+            .toList();
+        if (mounted) {
+          setState(() {
+            _cast = filtered;
+            _loadingCast = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching cast: $e');
+      if (mounted) {
+        setState(() => _loadingCast = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final obra = widget.obra;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0C10),
@@ -84,26 +127,82 @@ class ObraDetailPage extends StatelessWidget {
                         runSpacing: 8,
                         children: [
                           _chip(obra.genero, context),
-                          if (obra.distrito.isNotEmpty) _chip(obra.distrito, context),
+                          if (obra.distrito.isNotEmpty)
+                            _chip(obra.distrito, context),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
 
-                    // Descripción
-                    if (obra.descripcion.isNotEmpty)
+                    // Reparto (Cast)
+                    if (_loadingCast)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_cast.isNotEmpty) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          obra.descripcion,
-                          style: tt.bodyMedium?.copyWith(
-                            color: Colors.white70,
-                            height: 1.35,
+                          'Reparto',
+                          style: tt.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 110, // Altura para foto + nombre + rol
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _cast.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 16),
+                          itemBuilder: (context, index) {
+                            final person = _cast[index];
+                            return Column(
+                              children: [
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: Colors.grey[800],
+                                  backgroundImage: person.imageUrl.isNotEmpty
+                                      ? NetworkImage(person.imageUrl)
+                                      : null,
+                                  child: person.imageUrl.isEmpty
+                                      ? const Icon(
+                                          Icons.person,
+                                          color: Colors.white,
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  person.nombreCompleto,
+                                  style: tt.bodySmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  person.rol,
+                                  style: tt.labelSmall?.copyWith(
+                                    color: Colors.white70,
+                                    fontSize: 10,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
 
                     // Lugar / Horarios (simple)
                     Padding(
@@ -116,7 +215,9 @@ class ObraDetailPage extends StatelessWidget {
                           Expanded(
                             child: Text(
                               '${obra.calle}${obra.calle.isNotEmpty && obra.distrito.isNotEmpty ? ', ' : ''}${obra.distrito}',
-                              style: tt.bodyLarge?.copyWith(color: Colors.white),
+                              style: tt.bodyLarge?.copyWith(
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
@@ -129,8 +230,12 @@ class ObraDetailPage extends StatelessWidget {
                         children: [
                           const Text('🧭', style: TextStyle(fontSize: 20)),
                           const SizedBox(width: 8),
-                          Text('(${obra.latitud.toStringAsFixed(4)}, ${obra.longitud.toStringAsFixed(4)})',
-                              style: tt.bodyMedium?.copyWith(color: Colors.white70)),
+                          Text(
+                            '(${obra.latitud.toStringAsFixed(4)}, ${obra.longitud.toStringAsFixed(4)})',
+                            style: tt.bodyMedium?.copyWith(
+                              color: Colors.white70,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -162,14 +267,18 @@ class ObraDetailPage extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 
-  Widget _roundButton(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
+  Widget _roundButton(
+    BuildContext context, {
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return Material(
       color: Colors.white12,
       borderRadius: BorderRadius.circular(12),
@@ -200,7 +309,13 @@ class _BottomBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: const Color(0xFF0B0C10).withOpacity(0.94),
-        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, -2))],
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -210,7 +325,9 @@ class _BottomBar extends StatelessWidget {
                 backgroundColor: cs.primary,
                 foregroundColor: cs.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               onPressed: () {},
               child: const Text('Booking'),
@@ -222,7 +339,8 @@ class _BottomBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
-              onTap: () => context.read<FavoriteBloc>().add(ToggleFavorite(obra)),
+              onTap: () =>
+                  context.read<FavoriteBloc>().add(ToggleFavorite(obra)),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Icon(
