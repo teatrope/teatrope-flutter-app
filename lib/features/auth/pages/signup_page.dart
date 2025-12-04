@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:teatrope_flutter_app/core/ui/theme.dart';
 import 'package:teatrope_flutter_app/features/auth/data/auth_service.dart';
 import 'package:teatrope_flutter_app/features/auth/pages/signin_page.dart';
-import 'package:teatrope_flutter_app/features/main/main_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -15,45 +14,50 @@ class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+
   bool _isVisible = false;
   bool _loading = false;
   bool _remember = false;
 
-  final _authService = AuthService();
+  final _auth = AuthService();
 
   Future<void> _register() async {
-    if (_emailController.text.isEmpty ||
-        _passwordController.text.isEmpty ||
-        _confirmController.text.isEmpty) {
+    final email = _emailController.text.trim();
+    final pass = _passwordController.text;
+    final pass2 = _confirmController.text;
+
+    if (email.isEmpty || pass.isEmpty || pass2.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
+        const SnackBar(content: Text('Completa todos los campos')),
       );
       return;
     }
-    if (_passwordController.text != _confirmController.text) {
+    if (pass != pass2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        const SnackBar(content: Text('Las contraseñas no coinciden')),
       );
       return;
     }
 
     setState(() => _loading = true);
     try {
-      await _authService.signUp(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
+      await _auth.signUp(email, pass); // NO guarda token
       if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cuenta creada. Inicia sesión.')),
+      );
+
+      // Redirige a Sign in y pre-llena el correo
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainPage()),
+        MaterialPageRoute(builder: (_) => SigninPage(initialEmail: email)),
         (route) => false,
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -89,6 +93,8 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Email
                   Text(
                     'E-mail',
                     style: Theme.of(context)
@@ -101,11 +107,12 @@ class _SignUpPageState extends State<SignUpPage> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'user@gmail.com',
-                    ),
+                    decoration: const InputDecoration(hintText: 'user@gmail.com'),
                   ),
+
                   const SizedBox(height: 16),
+
+                  // Password
                   Text(
                     'Password',
                     style: Theme.of(context)
@@ -129,16 +136,20 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 12),
+
+                  // Confirm
                   TextField(
                     controller: _confirmController,
                     obscureText: true,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: '**********',
-                    ),
+                    decoration: const InputDecoration(hintText: '**********'),
                   ),
+
                   const SizedBox(height: 10),
+
+                  // Remember (si quieres usarlo para algo más adelante)
                   Row(
                     children: [
                       Checkbox(
@@ -158,19 +169,22 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 6),
+
+                  // Submit
                   FilledButton.icon(
                     onPressed: _loading ? null : _register,
                     icon: _loading
                         ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                            width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.arrow_right_alt),
                     label: Text(_loading ? 'Creating...' : 'Sign up'),
                   ),
+
                   const SizedBox(height: 16),
+
+                  // Go to Sign in
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

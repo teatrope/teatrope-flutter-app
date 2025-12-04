@@ -1,7 +1,17 @@
-import 'package:flutter/material.dart';
-import 'package:teatrope_flutter_app/features/home/presentation/home_page.dart';
+// lib/features/main_page.dart
 
-class MainPage extends StatefulWidget{
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:teatrope_flutter_app/features/home/presentation/pages/home_page.dart';
+import 'package:teatrope_flutter_app/features/favorites/presentation/pages/favorite_list_page.dart';
+import 'package:teatrope_flutter_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:teatrope_flutter_app/features/coming_soon/presentation/pages/coming_soon_page.dart';
+import 'package:teatrope_flutter_app/features/coming_soon/presentation/blocs/coming_soon_bloc.dart';
+import 'package:teatrope_flutter_app/features/coming_soon/presentation/blocs/coming_soon_event.dart';
+import 'package:teatrope_flutter_app/features/coming_soon/data/coming_soon_service.dart';
+
+class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
   @override
@@ -9,43 +19,62 @@ class MainPage extends StatefulWidget{
 }
 
 class _MainPageState extends State<MainPage> {
-int _selectedIndex = 0;
+  int _selectedIndex = 0;
 
-@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: HomePage()),
+      body: SafeArea(child: _getPage(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        onTap: (value) {
-          setState(() {
-            _selectedIndex = value;
-          });
-        },
-        items: [
+        onTap: (value) => setState(() => _selectedIndex = value),
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.local_movies_outlined),
             activeIcon: Icon(Icons.local_movies),
-            label: "Billboard",
+            label: 'Billboard',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.schedule_outlined),
             activeIcon: Icon(Icons.schedule),
-            label: "Coming soon",
+            label: 'Coming soon',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_outlined),
+            icon: Icon(Icons.favorite_outline),
             activeIcon: Icon(Icons.favorite),
-            label: "Favorites",
+            label: 'Favorites',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_2_outlined),
+            icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: "Profile",
+            label: 'Admin',
           ),
         ],
       ),
     );
   }
 
+  Widget _getPage(int index) {
+    switch (index) {
+      case 0:
+        return const HomePage();
+      case 1:
+        return BlocProvider(
+          create: (_) =>
+              ComingSoonBloc(service: ComingSoonService())
+                ..add(const LoadComingSoon()),
+          child: const ComingSoonPage(),
+        );
+      case 2:
+        return const FavoriteListPage();
+      case 3:
+        return const ProfilePage();
+      default:
+        return const HomePage();
+    }
+  }
 }
