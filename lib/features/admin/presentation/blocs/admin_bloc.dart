@@ -16,6 +16,8 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<LoadTheaterObras>(_onLoadTheaterObras);
     on<EditObra>(_onEditObra);
     on<UpdateObra>(_onUpdateObra);
+    on<CreateObra>(_onCreateObra);
+    on<DeleteObra>(_onDeleteObra);
     on<ClearEditingObra>(_onClearEditingObra);
   }
 
@@ -125,6 +127,54 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           clearEditingObra: true, // Clear editing obra on success
         ),
       );
+
+      // Refresh list
+      if (state.selectedTheater != null) {
+        add(LoadTheaterObras(state.selectedTheater!.id));
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          updateStatus: Status.failure,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onCreateObra(CreateObra event, Emitter<AdminState> emit) async {
+    emit(state.copyWith(updateStatus: Status.loading));
+    try {
+      final token = await _tokenStorage.read();
+      if (token == null) throw Exception('No token found');
+
+      await obraService.createObra(data: event.data, token: token);
+
+      emit(state.copyWith(updateStatus: Status.success));
+
+      // Refresh list
+      if (state.selectedTheater != null) {
+        add(LoadTheaterObras(state.selectedTheater!.id));
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          updateStatus: Status.failure,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onDeleteObra(DeleteObra event, Emitter<AdminState> emit) async {
+    emit(state.copyWith(updateStatus: Status.loading));
+    try {
+      final token = await _tokenStorage.read();
+      if (token == null) throw Exception('No token found');
+
+      await obraService.deleteObra(id: event.obraId, token: token);
+
+      emit(state.copyWith(updateStatus: Status.success));
 
       // Refresh list
       if (state.selectedTheater != null) {

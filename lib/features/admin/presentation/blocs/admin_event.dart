@@ -49,6 +49,24 @@ class UpdateObra extends AdminEvent {
   List<Object?> get props => [obraId, data];
 }
 
+class CreateObra extends AdminEvent {
+  final Map<String, dynamic> data;
+
+  const CreateObra(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
+class DeleteObra extends AdminEvent {
+  final String obraId;
+
+  const DeleteObra(this.obraId);
+
+  @override
+  List<Object?> get props => [obraId];
+}
+
 class ClearEditingObra extends AdminEvent {
   const ClearEditingObra();
 }

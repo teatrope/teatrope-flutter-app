@@ -8,8 +8,21 @@ import 'package:teatrope_flutter_app/features/home/domain/Obra.dart';
 import 'package:teatrope_flutter_app/features/home/presentation/pages/obra_detail_page.dart';
 import 'package:teatrope_flutter_app/features/home/widgets/obra_card.dart';
 
-class FavoriteListPage extends StatelessWidget {
+import 'package:teatrope_flutter_app/features/favorites/presentation/blocs/favorite_event.dart';
+
+class FavoriteListPage extends StatefulWidget {
   const FavoriteListPage({super.key});
+
+  @override
+  State<FavoriteListPage> createState() => _FavoriteListPageState();
+}
+
+class _FavoriteListPageState extends State<FavoriteListPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<FavoriteBloc>().add(const LoadFavorites());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +37,10 @@ class FavoriteListPage extends StatelessWidget {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Text(
@@ -37,8 +53,12 @@ class FavoriteListPage extends StatelessWidget {
                     ),
                     const Spacer(),
                     IconButton(
-                      icon: Icon(Icons.notifications_none, color: cs.onSurfaceVariant),
-                      onPressed: () => Navigator.of(context).pushNamed('/notifications'),
+                      icon: Icon(
+                        Icons.notifications_none,
+                        color: cs.onSurfaceVariant,
+                      ),
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/notifications'),
                     ),
                   ],
                 ),
@@ -54,13 +74,18 @@ class FavoriteListPage extends StatelessWidget {
                       return Center(
                         child: Text(
                           'No favorites yet',
-                          style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                          style: tt.bodyMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       );
                     }
 
                     return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       itemCount: obras.length,
                       itemBuilder: (context, index) {
                         final obra = obras[index];

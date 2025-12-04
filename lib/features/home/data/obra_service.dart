@@ -194,4 +194,52 @@ class ObraService {
       );
     }
   }
+
+  Future<void> createObra({
+    required Map<String, dynamic> data,
+    required String token,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.obrasEndpoint}',
+    );
+
+    final headers = <String, String>{
+      HttpHeaders.acceptHeader: 'application/json',
+      HttpHeaders.contentTypeHeader: 'application/json',
+      HttpHeaders.authorizationHeader: 'Token $token',
+    };
+
+    final resp = await _client.post(
+      uri,
+      headers: headers,
+      body: jsonEncode(data),
+    );
+
+    if (resp.statusCode != HttpStatus.created &&
+        resp.statusCode != HttpStatus.ok) {
+      throw Exception(
+        'HTTP ${resp.statusCode}: ${resp.reasonPhrase}\n${resp.body}',
+      );
+    }
+  }
+
+  Future<void> deleteObra({required String id, required String token}) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.obrasEndpoint}$id/',
+    );
+
+    final headers = <String, String>{
+      HttpHeaders.acceptHeader: 'application/json',
+      HttpHeaders.authorizationHeader: 'Token $token',
+    };
+
+    final resp = await _client.delete(uri, headers: headers);
+
+    if (resp.statusCode != HttpStatus.noContent &&
+        resp.statusCode != HttpStatus.ok) {
+      throw Exception(
+        'HTTP ${resp.statusCode}: ${resp.reasonPhrase}\n${resp.body}',
+      );
+    }
+  }
 }

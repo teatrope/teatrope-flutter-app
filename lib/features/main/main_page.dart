@@ -24,22 +24,7 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: [
-            const HomePage(),
-            BlocProvider(
-              create: (_) =>
-                  ComingSoonBloc(service: ComingSoonService())
-                    ..add(const LoadComingSoon()),
-              child: const ComingSoonPage(),
-            ),
-            const FavoriteListPage(),
-            const ProfilePage(),
-          ],
-        ),
-      ),
+      body: SafeArea(child: _getPage(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
@@ -71,5 +56,25 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
     );
+  }
+
+  Widget _getPage(int index) {
+    switch (index) {
+      case 0:
+        return const HomePage();
+      case 1:
+        return BlocProvider(
+          create: (_) =>
+              ComingSoonBloc(service: ComingSoonService())
+                ..add(const LoadComingSoon()),
+          child: const ComingSoonPage(),
+        );
+      case 2:
+        return const FavoriteListPage();
+      case 3:
+        return const ProfilePage();
+      default:
+        return const HomePage();
+    }
   }
 }

@@ -16,6 +16,7 @@ import 'package:teatrope_flutter_app/features/admin/presentation/blocs/admin_sta
 import 'package:teatrope_flutter_app/features/admin/presentation/blocs/admin_event.dart';
 import 'package:teatrope_flutter_app/features/home/domain/theater.dart';
 import 'package:teatrope_flutter_app/features/admin/presentation/pages/edit_obra_page.dart';
+import 'package:teatrope_flutter_app/features/admin/presentation/pages/add_obra_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -30,6 +31,8 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     // Ensure profile is loaded when page is initialized
     context.read<ProfileBloc>().add(const LoadProfile());
+    // Load theaters for Admin Panel
+    context.read<AdminBloc>().add(const LoadTheaters());
   }
 
   @override
@@ -236,7 +239,11 @@ class _AdminPanel extends StatelessWidget {
                     ),
                     IconButton(
                       onPressed: () {
-                        // TODO: Implement Add Work
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const AddObraPage(),
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.add_circle),
                       color: cs.primary,
@@ -321,8 +328,34 @@ class _AdminPanel extends StatelessWidget {
                               IconButton(
                                 icon: const Icon(Icons.delete, size: 20),
                                 color: cs.error,
-                                onPressed: () {
-                                  // TODO: Implement Delete Work
+                                onPressed: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Confirm Delete'),
+                                      content: Text(
+                                        'Are you sure you want to delete "${obra.nombre}"?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmed == true && context.mounted) {
+                                    context.read<AdminBloc>().add(
+                                      DeleteObra(obra.id),
+                                    );
+                                  }
                                 },
                               ),
                             ],
